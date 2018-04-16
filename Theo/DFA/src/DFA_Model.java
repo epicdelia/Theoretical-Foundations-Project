@@ -1,6 +1,7 @@
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Scanner;
 
 public class DFA_Model {
 
@@ -11,14 +12,17 @@ public class DFA_Model {
 		else {
 			getFile();
 		}
+		getInputforInclusion();
 }
-	
 
 	public static void getFile() {
 		
         // Name of the file to open.
-        String fileName = "DFA-test.txt";
-
+		//"DFA-test.txt";
+		Scanner reader = new Scanner(System.in);  // Reading from System.in
+		System.out.println("Enter filename: ");
+		String fileName = reader.nextLine();
+		
         // This will reference one line at a time
         String line = null;
        
@@ -32,7 +36,7 @@ public class DFA_Model {
                 new BufferedReader(fileReader);
 
             while((line = bufferedReader.readLine()) != null) {
-                System.out.println(line);
+                createSubset(line);
             }   
 
             // Always close files.
@@ -54,5 +58,32 @@ public class DFA_Model {
             // ex.printStackTrace();
         }
     }
+
+private static void createSubset(String line) {
+	if (line.length() > 1){
+		line = line.substring(1, line.length()-1);
+		System.out.println(line);
+	}
+	else {
+		
+	}
+	}
+	
+public static void getInputforInclusion() {
+	
+	// First get the scanner object with the input stream
+	Scanner sc = new Scanner(System.in); 
+
+	// Just using do-while here for no reason, you can use a simple while(true) as well
+	do{
+	    int input = sc.nextInt();  // read the next input
+	    if (input == 0) { // check if we need to exit out
+	        // break only if 0 is entered, this means we don't want to run the loop anymore
+	        break;
+	    } else {
+	        // otherwise, do something with the input
+	    }
+	} while(true); // and keep repeating
+}
 }
 	
