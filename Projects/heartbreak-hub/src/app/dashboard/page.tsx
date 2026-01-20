@@ -38,7 +38,9 @@ import {
   Loader2,
   Sparkles,
   Calendar,
+  NotebookPen,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, isLoading: isUserLoading } = useUser();
@@ -241,10 +243,18 @@ export default function DashboardPage() {
             <Sparkles className="h-6 w-6 text-purple-600" />
             <span className="font-semibold text-purple-700">HeartBreak Hub</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/journal">
+                <NotebookPen className="h-4 w-4 mr-2" />
+                Journal
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </header>
 
