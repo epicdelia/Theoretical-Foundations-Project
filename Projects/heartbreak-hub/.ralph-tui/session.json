@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "sessionId": "1ff639c4-4950-4c76-b092-0dfdd2bd069f",
+  "status": "running",
+  "startedAt": "2026-01-20T11:16:57.071Z",
+  "updatedAt": "2026-01-20T11:16:57.075Z",
+  "currentIteration": 0,
+  "maxIterations": 20,
+  "tasksCompleted": 0,
+  "isPaused": false,
+  "agentPlugin": "claude",
+  "trackerState": {
+    "plugin": "json",
+    "prdPath": "./prd.json",
+    "totalTasks": 16,
+    "tasks": [
+      {
+        "id": "US-001",
+        "title": "Project Setup & Infrastructure",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-002",
+        "title": "Database Schema Design",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-003",
+        "title": "Authentication System",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-004",
+        "title": "Landing Page",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-005",
+        "title": "Onboarding Quiz",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-006",
+        "title": "Recovery Pathways Display",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-007",
+        "title": "Daily Content & Exercises",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-008",
+        "title": "Mood Journaling",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-009",
+        "title": "Milestone System",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-010",
+        "title": "Recovery Score Dashboard",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-011",
+        "title": "Cohort Listing & Enrollment",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-012",
+        "title": "Cohort Progress Feed",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-013",
+        "title": "Content Library",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-014",
+        "title": "Therapist Directory",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-015",
+        "title": "User Profile & Settings",
+        "status": "open",
+        "completedInSession": false
+      },
+      {
+        "id": "US-016",
+        "title": "Mobile-Responsive Navigation",
+        "status": "open",
+        "completedInSession": false
+      }
+    ]
+  },
+  "iterations": [],
+  "skippedTaskIds": [],
+  "cwd": "/Users/delia/Desktop/Projects/heartbreak-hub",
+  "activeTaskIds": [
+    "US-001"
+  ],
+  "subagentPanelVisible": false
+}

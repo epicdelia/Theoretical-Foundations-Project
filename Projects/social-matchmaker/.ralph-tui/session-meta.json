@@ -1,0 +1,14 @@
+{
+  "id": "6e026cbf-70de-4018-99c3-d9b1d00e0a47",
+  "status": "running",
+  "startedAt": "2026-01-20T11:16:57.029Z",
+  "updatedAt": "2026-01-20T11:16:57.029Z",
+  "agentPlugin": "claude",
+  "trackerPlugin": "json",
+  "prdPath": "./prd.json",
+  "currentIteration": 0,
+  "maxIterations": 20,
+  "totalTasks": 0,
+  "tasksCompleted": 0,
+  "cwd": "/Users/delia/Desktop/Projects/social-matchmaker"
+}
