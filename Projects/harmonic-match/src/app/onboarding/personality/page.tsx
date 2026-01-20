@@ -29,6 +29,7 @@ import type {
   PersonalityAssessmentInsert,
   BigFiveScoresJson,
 } from "@/lib/database.types";
+import { triggerCompatibilityCalculation } from "@/lib/compatibility/actions";
 
 // ============================================================================
 // BIG FIVE PERSONALITY TRAITS
@@ -343,6 +344,9 @@ export default function PersonalityAssessmentPage() {
       if (upsertError) {
         throw upsertError;
       }
+
+      // Trigger compatibility calculation (non-blocking)
+      triggerCompatibilityCalculation().catch(console.error);
 
       // Navigate to discover page (onboarding complete)
       router.push("/discover");
