@@ -1,0 +1,14 @@
+{
+  "id": "1a2182a7-c2ce-45f1-884d-158596736344",
+  "status": "running",
+  "startedAt": "2026-01-20T11:16:57.099Z",
+  "updatedAt": "2026-01-20T11:16:57.099Z",
+  "agentPlugin": "claude",
+  "trackerPlugin": "json",
+  "prdPath": "./prd.json",
+  "currentIteration": 0,
+  "maxIterations": 20,
+  "totalTasks": 0,
+  "tasksCompleted": 0,
+  "cwd": "/Users/delia/Desktop/Projects/harmonic-match"
+}
