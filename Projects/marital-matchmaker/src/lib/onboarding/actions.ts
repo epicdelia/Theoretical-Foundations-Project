@@ -74,3 +74,77 @@ export async function saveIntentResponses(formData: FormData) {
 
   return { success: true };
 }
+
+export async function saveProfile(formData: FormData) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be logged in to create a profile" };
+  }
+
+  const displayName = formData.get("display_name") as string;
+  const ageStr = formData.get("age") as string;
+  const gender = formData.get("gender") as string;
+  const location = formData.get("location") as string;
+  const bio = formData.get("bio") as string;
+  const photosStr = formData.get("photos") as string;
+
+  // Validate required fields
+  if (!displayName?.trim()) {
+    return { error: "Display name is required" };
+  }
+
+  const age = parseInt(ageStr, 10);
+  if (isNaN(age) || age < 18 || age > 120) {
+    return { error: "Please enter a valid age (18-120)" };
+  }
+
+  if (!gender) {
+    return { error: "Gender selection is required" };
+  }
+
+  if (!location?.trim()) {
+    return { error: "Location is required" };
+  }
+
+  // Parse and validate photos
+  let photos: Array<{ id: string; url: string }> = [];
+  try {
+    photos = JSON.parse(photosStr || "[]");
+  } catch {
+    return { error: "Invalid photo data" };
+  }
+
+  if (photos.length === 0) {
+    return { error: "At least 1 photo is required" };
+  }
+
+  // Validate bio length
+  if (bio && bio.length > 500) {
+    return { error: "Bio must be 500 characters or less" };
+  }
+
+  // Update the users_extended record
+  const { error: updateError } = await supabase
+    .from("users_extended")
+    .update({
+      display_name: displayName.trim(),
+      age,
+      gender,
+      location: location.trim(),
+      bio: bio?.trim() || null,
+      photos_json: photos,
+    })
+    .eq("user_id", user.id);
+
+  if (updateError) {
+    console.error("Profile update error:", updateError);
+    return { error: "Failed to save profile. Please try again." };
+  }
+
+  return { success: true };
+}
