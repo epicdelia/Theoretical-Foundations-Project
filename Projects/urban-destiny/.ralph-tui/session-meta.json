@@ -1,0 +1,14 @@
+{
+  "id": "8f906132-8bc5-4bd8-9ed5-6eb33e27aa41",
+  "status": "running",
+  "startedAt": "2026-01-20T11:16:56.969Z",
+  "updatedAt": "2026-01-20T11:16:56.969Z",
+  "agentPlugin": "claude",
+  "trackerPlugin": "json",
+  "prdPath": "./prd.json",
+  "currentIteration": 0,
+  "maxIterations": 20,
+  "totalTasks": 0,
+  "tasksCompleted": 0,
+  "cwd": "/Users/delia/Desktop/Projects/urban-destiny"
+}
