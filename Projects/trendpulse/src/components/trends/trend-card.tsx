@@ -11,16 +11,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScoreBreakdown } from "./score-breakdown";
+import { ContentGenerator } from "@/components/content";
 import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
   Hash,
   Layers,
+  Sparkles,
 } from "lucide-react";
 import type { TrendSignals } from "@/lib/trends";
 
 interface TrendCardProps {
+  id: string;
   rank: number;
   title: string;
   summary: string | null;
@@ -36,6 +39,7 @@ interface TrendCardProps {
 }
 
 export function TrendCard({
+  id,
   rank,
   title,
   summary,
@@ -50,6 +54,7 @@ export function TrendCard({
   sourceCount,
 }: TrendCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [showGenerator, setShowGenerator] = useState(false);
 
   return (
     <Card className="relative overflow-hidden">
@@ -109,25 +114,36 @@ export function TrendCard({
           </div>
         )}
 
-        {/* Expand/Collapse button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full mt-2"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? (
-            <>
-              <ChevronUp className="h-4 w-4 mr-1" />
-              Show less
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-4 w-4 mr-1" />
-              View details
-            </>
-          )}
-        </Button>
+        {/* Action buttons */}
+        <div className="flex gap-2 mt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-1"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? (
+              <>
+                <ChevronUp className="h-4 w-4 mr-1" />
+                Show less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 mr-1" />
+                View details
+              </>
+            )}
+          </Button>
+          <Button
+            variant={showGenerator ? "secondary" : "default"}
+            size="sm"
+            className="flex-1"
+            onClick={() => setShowGenerator(!showGenerator)}
+          >
+            <Sparkles className="h-4 w-4 mr-1" />
+            {showGenerator ? "Hide Generator" : "Generate Content"}
+          </Button>
+        </div>
 
         {/* Expanded content */}
         {expanded && (
@@ -171,6 +187,17 @@ export function TrendCard({
                 <p>Days since last seen: {signals.daysSinceLastSeen}</p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Content Generator */}
+        {showGenerator && (
+          <div className="mt-4 pt-4 border-t">
+            <ContentGenerator
+              trendId={id}
+              trendTitle={title}
+              sourceUrls={sourceUrls}
+            />
           </div>
         )}
       </CardContent>

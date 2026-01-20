@@ -194,6 +194,7 @@ export function TrendsDashboard({ initialTrends = [] }: TrendsDashboardProps) {
           {trends.map((trend) => (
             <TrendCard
               key={trend.id}
+              id={trend.id}
               rank={trend.rank}
               title={trend.title}
               summary={trend.summary}
