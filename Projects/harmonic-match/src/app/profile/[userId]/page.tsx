@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
+import { likeUser, passUser, type LikeResult } from "@/lib/matching";
+import { MatchNotification } from "@/components/matching";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -798,6 +800,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isInteracting, setIsInteracting] = useState(false);
+  const [matchNotification, setMatchNotification] = useState<LikeResult | null>(null);
 
   const isOwnProfile = user?.id === userId;
 
@@ -904,50 +907,17 @@ export default function ProfilePage() {
     setIsInteracting(true);
 
     try {
-      const otherUserId = userId;
+      const result = await likeUser(userId);
 
-      // Check if a match record already exists
-      const { data: existingMatch } = await supabase
-        .from("matches")
-        .select("*")
-        .or(
-          `and(user1_id.eq.${user.id},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${user.id})`
-        )
-        .single();
-
-      if (existingMatch) {
-        const isUser1 = existingMatch.user1_id === user.id;
-        const updateField = isUser1 ? "user1_liked" : "user2_liked";
-        const otherLiked = isUser1
-          ? existingMatch.user2_liked
-          : existingMatch.user1_liked;
-
-        const updateData: Record<string, boolean | string> = {
-          [updateField]: true,
-        };
-        if (otherLiked) {
-          updateData.matched_at = new Date().toISOString();
+      if (result.success) {
+        // Show match notification if it's a match
+        if (result.isMatch && result.matchedUser) {
+          setMatchNotification(result);
+        } else {
+          // Navigate back to discover if not a match
+          router.push("/discover");
         }
-
-        await supabase
-          .from("matches")
-          .update(updateData)
-          .eq("id", existingMatch.id);
-      } else {
-        const [orderedUser1, orderedUser2] =
-          user.id < otherUserId ? [user.id, otherUserId] : [otherUserId, user.id];
-        const isUser1 = user.id === orderedUser1;
-
-        await supabase.from("matches").insert({
-          user1_id: orderedUser1,
-          user2_id: orderedUser2,
-          user1_liked: isUser1,
-          user2_liked: !isUser1,
-        });
       }
-
-      // Navigate back to discover
-      router.push("/discover");
     } catch (err) {
       console.error("Error recording like:", err);
     } finally {
@@ -962,38 +932,11 @@ export default function ProfilePage() {
     setIsInteracting(true);
 
     try {
-      const otherUserId = userId;
+      const result = await passUser(userId);
 
-      const { data: existingMatch } = await supabase
-        .from("matches")
-        .select("*")
-        .or(
-          `and(user1_id.eq.${user.id},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${user.id})`
-        )
-        .single();
-
-      if (existingMatch) {
-        const isUser1 = existingMatch.user1_id === user.id;
-        const updateField = isUser1 ? "user1_liked" : "user2_liked";
-
-        await supabase
-          .from("matches")
-          .update({ [updateField]: false })
-          .eq("id", existingMatch.id);
-      } else {
-        const [orderedUser1, orderedUser2] =
-          user.id < otherUserId ? [user.id, otherUserId] : [otherUserId, user.id];
-        const isUser1 = user.id === orderedUser1;
-
-        await supabase.from("matches").insert({
-          user1_id: orderedUser1,
-          user2_id: orderedUser2,
-          user1_liked: isUser1 ? false : null,
-          user2_liked: isUser1 ? null : false,
-        });
+      if (result.success) {
+        router.push("/discover");
       }
-
-      router.push("/discover");
     } catch (err) {
       console.error("Error recording pass:", err);
     } finally {
@@ -1174,6 +1117,19 @@ export default function ProfilePage() {
             </Button>
           </div>
         </div>
+      )}
+
+      {/* Match Notification */}
+      {matchNotification?.isMatch && matchNotification.matchedUser && (
+        <MatchNotification
+          isOpen={true}
+          onClose={() => {
+            setMatchNotification(null);
+            router.push("/discover");
+          }}
+          matchedUser={matchNotification.matchedUser}
+          conversationId={matchNotification.conversationId}
+        />
       )}
     </div>
   );

@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
+import { likeUser, passUser, type LikeResult } from "@/lib/matching";
+import { MatchNotification } from "@/components/matching";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -500,6 +502,7 @@ export default function DiscoverPage() {
   const [animationDirection, setAnimationDirection] = useState<"left" | "right" | null>(null);
   const [passedProfiles, setPassedProfiles] = useState<Set<string>>(new Set());
   const [likedProfiles, setLikedProfiles] = useState<Set<string>>(new Set());
+  const [matchNotification, setMatchNotification] = useState<LikeResult | null>(null);
 
   // Fetch profiles with compatibility scores
   const fetchProfiles = useCallback(async () => {
@@ -642,48 +645,16 @@ export default function DiscoverPage() {
     const otherUserId = currentProfile.userProfile.user_id;
 
     try {
-      // Check if a match record already exists
-      const { data: existingMatch } = await supabase
-        .from("matches")
-        .select("*")
-        .or(
-          `and(user1_id.eq.${user.id},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${user.id})`
-        )
-        .single();
+      const result = await likeUser(otherUserId);
 
-      if (existingMatch) {
-        // Update existing match
-        const isUser1 = existingMatch.user1_id === user.id;
-        const updateField = isUser1 ? "user1_liked" : "user2_liked";
-        const otherLiked = isUser1 ? existingMatch.user2_liked : existingMatch.user1_liked;
+      if (result.success) {
+        setLikedProfiles((prev) => new Set([...prev, otherUserId]));
 
-        const updateData: Record<string, boolean | string> = { [updateField]: true };
-
-        // If both users have liked, set matched_at
-        if (otherLiked) {
-          updateData.matched_at = new Date().toISOString();
+        // Show match notification if it's a match
+        if (result.isMatch && result.matchedUser) {
+          setMatchNotification(result);
         }
-
-        await supabase
-          .from("matches")
-          .update(updateData)
-          .eq("id", existingMatch.id);
-      } else {
-        // Create new match record
-        const [orderedUser1, orderedUser2] =
-          user.id < otherUserId ? [user.id, otherUserId] : [otherUserId, user.id];
-
-        const isUser1 = user.id === orderedUser1;
-
-        await supabase.from("matches").insert({
-          user1_id: orderedUser1,
-          user2_id: orderedUser2,
-          user1_liked: isUser1,
-          user2_liked: !isUser1,
-        });
       }
-
-      setLikedProfiles((prev) => new Set([...prev, otherUserId]));
     } catch (err) {
       console.error("Error recording like:", err);
     }
@@ -693,7 +664,7 @@ export default function DiscoverPage() {
       setAnimationDirection(null);
       setCurrentIndex((prev) => prev + 1);
     }, 300);
-  }, [currentProfile, user, isAnimating, supabase]);
+  }, [currentProfile, user, isAnimating]);
 
   // Handle pass action
   const handlePass = useCallback(async () => {
@@ -705,40 +676,11 @@ export default function DiscoverPage() {
     const otherUserId = currentProfile.userProfile.user_id;
 
     try {
-      // Check if a match record already exists
-      const { data: existingMatch } = await supabase
-        .from("matches")
-        .select("*")
-        .or(
-          `and(user1_id.eq.${user.id},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${user.id})`
-        )
-        .single();
+      const result = await passUser(otherUserId);
 
-      if (existingMatch) {
-        // Update existing match
-        const isUser1 = existingMatch.user1_id === user.id;
-        const updateField = isUser1 ? "user1_liked" : "user2_liked";
-
-        await supabase
-          .from("matches")
-          .update({ [updateField]: false })
-          .eq("id", existingMatch.id);
-      } else {
-        // Create new match record with pass
-        const [orderedUser1, orderedUser2] =
-          user.id < otherUserId ? [user.id, otherUserId] : [otherUserId, user.id];
-
-        const isUser1 = user.id === orderedUser1;
-
-        await supabase.from("matches").insert({
-          user1_id: orderedUser1,
-          user2_id: orderedUser2,
-          user1_liked: isUser1 ? false : null,
-          user2_liked: isUser1 ? null : false,
-        });
+      if (result.success) {
+        setPassedProfiles((prev) => new Set([...prev, otherUserId]));
       }
-
-      setPassedProfiles((prev) => new Set([...prev, otherUserId]));
     } catch (err) {
       console.error("Error recording pass:", err);
     }
@@ -748,7 +690,7 @@ export default function DiscoverPage() {
       setAnimationDirection(null);
       setCurrentIndex((prev) => prev + 1);
     }, 300);
-  }, [currentProfile, user, isAnimating, supabase]);
+  }, [currentProfile, user, isAnimating]);
 
   // Handle view profile
   const handleViewProfile = useCallback(() => {
@@ -898,6 +840,16 @@ export default function DiscoverPage() {
             </span>
           </div>
         </div>
+      )}
+
+      {/* Match Notification */}
+      {matchNotification?.isMatch && matchNotification.matchedUser && (
+        <MatchNotification
+          isOpen={true}
+          onClose={() => setMatchNotification(null)}
+          matchedUser={matchNotification.matchedUser}
+          conversationId={matchNotification.conversationId}
+        />
       )}
     </div>
   );
