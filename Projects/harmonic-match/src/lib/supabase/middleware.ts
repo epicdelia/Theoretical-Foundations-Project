@@ -1,6 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Routes that require authentication
+const protectedRoutes = [
+  "/discover",
+  "/profile",
+  "/matches",
+  "/messages",
+  "/settings",
+  "/onboarding",
+];
+
+// Routes that should redirect to home if authenticated
+const authRoutes = ["/login", "/signup"];
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -30,7 +43,31 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Refreshing the auth token
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+
+  // Check if current route is protected
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  // Check if current route is an auth route
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+
+  // Redirect unauthenticated users from protected routes
+  if (isProtectedRoute && !user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Redirect authenticated users from auth routes to home
+  if (isAuthRoute && user) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 
   return supabaseResponse;
 }
