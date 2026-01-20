@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Heart, Sparkles, Sun, TrendingUp, ArrowRight } from "lucide-react";
@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/context";
+import { createClient } from "@/lib/supabase/client";
 
 type PathwayRecommendation = "fresh-breakup" | "long-term-healing" | "moving-forward";
 
@@ -30,8 +31,8 @@ const PATHWAYS: PathwayInfo[] = [
     id: "fresh-breakup",
     name: "Fresh Breakup",
     description:
-      "Immediate support for when the pain is raw. Focus on self-care, processing emotions, and getting through the hardest days.",
-    duration: "14 days",
+      "Immediate coping and stabilization support for when the pain is raw. Focus on getting through each day with practical tools and emotional first aid.",
+    duration: "21 days",
     icon: <Heart className="h-8 w-8" />,
     features: [
       "Daily check-ins and emotional support",
@@ -44,8 +45,8 @@ const PATHWAYS: PathwayInfo[] = [
     id: "long-term-healing",
     name: "Long-term Healing",
     description:
-      "A comprehensive journey to understand, process, and grow from your experience. Build resilience and rediscover yourself.",
-    duration: "30 days",
+      "Deep processing and growth-focused journey to understand your experience, build resilience, and rediscover yourself through comprehensive healing work.",
+    duration: "45 days",
     icon: <Sparkles className="h-8 w-8" />,
     features: [
       "Deep emotional processing exercises",
@@ -58,8 +59,8 @@ const PATHWAYS: PathwayInfo[] = [
     id: "moving-forward",
     name: "Moving Forward",
     description:
-      "Ready to embrace what's next? Focus on personal growth, setting new goals, and opening yourself to future possibilities.",
-    duration: "21 days",
+      "Rebuilding and new beginnings focus for when you're ready to embrace what's next. Set new goals and open yourself to future possibilities.",
+    duration: "30 days",
     icon: <Sun className="h-8 w-8" />,
     features: [
       "Goal setting and vision planning",
@@ -110,10 +111,26 @@ export default function PathwaysPage() {
 
   const otherPathways = PATHWAYS.filter((p) => p.id !== recommendation);
 
-  const handleSelectPathway = (pathwayId: PathwayRecommendation) => {
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  const handleSelectPathway = async (pathwayId: PathwayRecommendation) => {
     if (user) {
-      // For authenticated users, go to dashboard or pathway detail
-      router.push(`/dashboard?pathway=${pathwayId}`);
+      setIsSelecting(true);
+      try {
+        const supabase = createClient();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
+          .from("user_profiles")
+          .update({ pathway_id: pathwayId })
+          .eq("user_id", user.id);
+
+        if (error) {
+          console.error("Error saving pathway selection:", error);
+        }
+      } catch (err) {
+        console.error("Error saving pathway:", err);
+      }
+      router.push("/dashboard");
     } else {
       // For anonymous users, prompt to sign up
       router.push(`/signup?pathway=${pathwayId}`);
@@ -212,9 +229,10 @@ export default function PathwaysPage() {
                     size="lg"
                     className="w-full"
                     onClick={() => handleSelectPathway(recommendedPathway.id)}
+                    disabled={isSelecting}
                   >
-                    Start This Pathway
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    {isSelecting ? "Selecting..." : "Select"}
+                    {!isSelecting && <ArrowRight className="h-4 w-4 ml-2" />}
                   </Button>
                 </CardContent>
               </Card>
@@ -249,8 +267,9 @@ export default function PathwaysPage() {
                         variant="outline"
                         className="w-full"
                         onClick={() => handleSelectPathway(pathway.id)}
+                        disabled={isSelecting}
                       >
-                        Choose This Pathway
+                        {isSelecting ? "Selecting..." : "Select"}
                       </Button>
                     </CardContent>
                   </Card>
