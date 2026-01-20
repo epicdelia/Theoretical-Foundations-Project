@@ -1,0 +1,34 @@
+## Task
+**ID**: {{taskId}}
+**Title**: {{taskTitle}}
+
+{{#if taskDescription}}
+## Description
+{{taskDescription}}
+{{/if}}
+
+{{#if acceptanceCriteria}}
+## Acceptance Criteria
+{{acceptanceCriteria}}
+{{/if}}
+
+{{#if labels}}
+**Labels**: {{labels}}
+{{/if}}
+
+{{#if dependsOn}}
+**Dependencies**: {{dependsOn}}
+{{/if}}
+
+{{#if recentProgress}}
+## Previous Progress
+{{recentProgress}}
+{{/if}}
+
+## Instructions
+Complete the task described above.
+
+**IMPORTANT**: If the work is already complete (implemented in a previous iteration or already exists), verify it works correctly and signal completion immediately.
+
+When finished (or if already complete), signal completion with:
+<promise>COMPLETE</promise>

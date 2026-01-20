@@ -1,0 +1,14 @@
+{
+  "id": "3be317f8-b645-4f96-a12a-e8724524fd63",
+  "status": "running",
+  "startedAt": "2026-01-20T11:16:56.898Z",
+  "updatedAt": "2026-01-20T11:23:53.248Z",
+  "agentPlugin": "claude",
+  "trackerPlugin": "json",
+  "prdPath": "./prd.json",
+  "currentIteration": 1,
+  "maxIterations": 20,
+  "totalTasks": 0,
+  "tasksCompleted": 1,
+  "cwd": "/Users/delia/Desktop/Projects/marital-matchmaker"
+}

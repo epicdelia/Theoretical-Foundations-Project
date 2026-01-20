@@ -1,0 +1,452 @@
+{
+  "name": "marital-matchmaker",
+  "description": "AI-powered compatibility engine for finding life partners. Combines deep compatibility quizzes across 5 dimensions (Values, Goals, Communication, Lifestyle, Finance) with profile browsing and in-app messaging. Intent questionnaire ensures users are serious about marriage.",
+  "branchName": "ralph/marital-matchmaker-ai",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Project Setup & Infrastructure",
+      "description": "As a developer, I want the base Next.js 14 project configured with Supabase, Tailwind CSS, and shadcn/ui for the matchmaking platform.",
+      "acceptanceCriteria": [
+        "Next.js 14 app created with App Router",
+        "Supabase client configured with environment variables",
+        "Tailwind CSS configured with romantic/elegant color palette (deep purples, golds, soft pinks)",
+        "shadcn/ui initialized with button, card, input, form, avatar, badge components",
+        "Base layout with responsive container created",
+        "Environment variables template (.env.example) created",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-002",
+      "title": "Database Schema Design",
+      "description": "As a developer, I want the complete database schema for user profiles, compatibility scores, and messaging.",
+      "acceptanceCriteria": [
+        "users_extended table (id, user_id, display_name, age, gender, location, bio, photos_json, intent_verified, created_at)",
+        "compatibility_quiz_responses table (id, user_id, dimension, question_id, answer_value, created_at)",
+        "compatibility_dimensions table (id, name: values/goals/communication/lifestyle/finance, weight, description)",
+        "quiz_questions table (id, dimension_id, question_text, answer_options_json, scoring_logic)",
+        "matches table (id, user1_id, user2_id, compatibility_score, dimension_scores_json, status, created_at)",
+        "conversations table (id, match_id, created_at)",
+        "messages table (id, conversation_id, sender_id, content, read_at, created_at)",
+        "user_preferences table (id, user_id, min_age, max_age, preferred_location, dealbreakers_json)",
+        "intent_responses table (id, user_id, marriage_timeline, relationship_history, what_seeking, created_at)",
+        "likes table (id, from_user_id, to_user_id, created_at)",
+        "blocks table (id, blocker_id, blocked_id, created_at)",
+        "Row Level Security policies for all tables",
+        "Seed data for 5 compatibility dimensions with descriptions",
+        "Seed data for 25 quiz questions (5 per dimension)",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Authentication System",
+      "description": "As a user, I want to sign up and login securely to access the matchmaking platform.",
+      "acceptanceCriteria": [
+        "Supabase Auth configured with email/password",
+        "Google OAuth provider configured",
+        "Apple OAuth provider configured",
+        "Login page at /login with all sign-in options",
+        "Sign up page at /signup with email verification required",
+        "Auth context/provider for user state management",
+        "Protected route middleware for authenticated pages",
+        "Redirect to /onboarding after first signup",
+        "Redirect to /dashboard for returning users",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Landing Page",
+      "description": "As a visitor, I want to see a compelling landing page that communicates the platform's serious intent.",
+      "acceptanceCriteria": [
+        "Hero section with headline about finding a life partner, not just dates",
+        "Value proposition: AI-powered compatibility beyond surface matching",
+        "How it works section: 1) Complete quiz, 2) Get matched, 3) Connect meaningfully",
+        "5 compatibility dimensions showcase with icons and descriptions",
+        "Trust signals: Intent verification, serious users only messaging",
+        "Success stories section (placeholder testimonials)",
+        "CTA buttons to /signup throughout page",
+        "Mobile-responsive design",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Intent Questionnaire",
+      "description": "As a new user, I want to complete an intent questionnaire to verify my serious interest in marriage.",
+      "acceptanceCriteria": [
+        "Intent questionnaire page at /onboarding/intent as first onboarding step",
+        "Question 1: Marriage timeline (1 year, 2-3 years, when right person, unsure)",
+        "Question 2: Previous serious relationships (never, 1-2, 3+, prefer not to say)",
+        "Question 3: What are you seeking (life partner, serious relationship exploring marriage, not sure yet)",
+        "Question 4: Open text - What does marriage mean to you?",
+        "Responses saved to intent_responses table",
+        "Users selecting 'not sure yet' shown message about platform being for serious seekers",
+        "Mark intent_verified=true in users_extended on completion",
+        "Redirect to /onboarding/profile after completion",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002",
+        "US-003"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Profile Creation",
+      "description": "As a new user, I want to create my profile with photos and basic info.",
+      "acceptanceCriteria": [
+        "Profile creation page at /onboarding/profile",
+        "Display name input field",
+        "Age input (must be 18+, validated)",
+        "Gender selection (male, female, non-binary, prefer not to say)",
+        "Location input with city/region",
+        "Bio textarea (500 char limit) with helpful prompts",
+        "Photo upload supporting up to 6 images",
+        "Photos stored in Supabase Storage bucket",
+        "Photo URLs saved to users_extended.photos_json",
+        "At least 1 photo required to proceed",
+        "Save progress and redirect to /onboarding/quiz",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002",
+        "US-003"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "Compatibility Quiz - Values Dimension",
+      "description": "As a user, I want to answer questions about my core values for compatibility matching.",
+      "acceptanceCriteria": [
+        "Quiz page at /onboarding/quiz/values",
+        "5 questions about values: family importance, religious/spiritual beliefs, honesty standards, loyalty views, life priorities",
+        "Each question has 4-5 answer options with hidden scoring weights",
+        "Progress bar showing 1/5 dimensions complete",
+        "Answers saved to compatibility_quiz_responses table",
+        "Back button to review/change previous answers",
+        "Next button proceeds to /onboarding/quiz/goals",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "Compatibility Quiz - Goals Dimension",
+      "description": "As a user, I want to answer questions about my life goals for compatibility matching.",
+      "acceptanceCriteria": [
+        "Quiz page at /onboarding/quiz/goals",
+        "5 questions about goals: career ambitions, children preferences, where to live, retirement vision, adventure vs stability",
+        "Each question has 4-5 answer options with scoring weights",
+        "Progress bar showing 2/5 dimensions",
+        "Answers saved to compatibility_quiz_responses",
+        "Navigation to previous dimension and next (/onboarding/quiz/communication)",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-007"
+      ]
+    },
+    {
+      "id": "US-009",
+      "title": "Compatibility Quiz - Communication Dimension",
+      "description": "As a user, I want to answer questions about my communication style.",
+      "acceptanceCriteria": [
+        "Quiz page at /onboarding/quiz/communication",
+        "5 questions: conflict resolution style, emotional expression, quality time needs, love language hints, discussion preferences",
+        "Each question has answer options with scoring",
+        "Progress bar showing 3/5 dimensions",
+        "Answers saved to compatibility_quiz_responses",
+        "Navigation to /onboarding/quiz/lifestyle",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-008"
+      ]
+    },
+    {
+      "id": "US-010",
+      "title": "Compatibility Quiz - Lifestyle Dimension",
+      "description": "As a user, I want to answer questions about my lifestyle preferences.",
+      "acceptanceCriteria": [
+        "Quiz page at /onboarding/quiz/lifestyle",
+        "5 questions: social preferences (introvert/extrovert), health/fitness importance, travel frequency, pet preferences, daily routine",
+        "Each question has answer options with scoring",
+        "Progress bar showing 4/5 dimensions",
+        "Answers saved to compatibility_quiz_responses",
+        "Navigation to /onboarding/quiz/finance",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-009"
+      ]
+    },
+    {
+      "id": "US-011",
+      "title": "Compatibility Quiz - Finance Dimension",
+      "description": "As a user, I want to answer questions about my financial values and habits.",
+      "acceptanceCriteria": [
+        "Quiz page at /onboarding/quiz/finance",
+        "5 questions: spending vs saving style, financial goals, debt attitudes, income sharing views, lifestyle expectations",
+        "Each question has answer options with scoring",
+        "Progress bar showing 5/5 dimensions complete",
+        "Answers saved to compatibility_quiz_responses",
+        "On completion, trigger compatibility calculation for existing users",
+        "Redirect to /onboarding/preferences",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-010"
+      ]
+    },
+    {
+      "id": "US-012",
+      "title": "Partner Preferences Setup",
+      "description": "As a user, I want to set my preferences for potential matches.",
+      "acceptanceCriteria": [
+        "Preferences page at /onboarding/preferences",
+        "Age range slider (min and max)",
+        "Location preference (same city, same region, anywhere)",
+        "Dealbreakers checklist (smoking, children preference mismatch, religious differences, etc.)",
+        "Preferences saved to user_preferences table",
+        "Complete onboarding button redirects to /dashboard",
+        "Show 'Finding your matches...' loading state",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002",
+        "US-011"
+      ]
+    },
+    {
+      "id": "US-013",
+      "title": "Compatibility Scoring Algorithm",
+      "description": "As a user, I want to see compatibility scores calculated based on quiz answers.",
+      "acceptanceCriteria": [
+        "Server function to calculate compatibility between two users",
+        "Score calculation: weighted average of dimension scores (0-100)",
+        "Per-dimension score based on answer similarity/complementarity",
+        "Weights from compatibility_dimensions table applied",
+        "Results stored in matches table with overall score and dimension_scores_json",
+        "Function triggered when new user completes quiz",
+        "Function calculates against all compatible users (gender, age, location prefs)",
+        "Matches above 60% compatibility threshold created",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002",
+        "US-011"
+      ]
+    },
+    {
+      "id": "US-014",
+      "title": "Dashboard with Matches",
+      "description": "As a user, I want to see my top compatible matches on my dashboard.",
+      "acceptanceCriteria": [
+        "Dashboard page at /dashboard showing match cards",
+        "Top matches section showing highest compatibility scores first",
+        "Each match card shows: photo, name, age, location, overall compatibility %",
+        "Click card to view full profile at /profile/[id]",
+        "Like button on each card (heart icon)",
+        "Filter/sort options: by compatibility, by recent activity",
+        "Empty state if no matches yet",
+        "Refresh matches button to recalculate",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-013"
+      ]
+    },
+    {
+      "id": "US-015",
+      "title": "Profile View with Compatibility Breakdown",
+      "description": "As a user, I want to view another user's full profile with detailed compatibility analysis.",
+      "acceptanceCriteria": [
+        "Profile page at /profile/[id] showing full user details",
+        "Photo gallery with all user photos",
+        "Bio and basic info (age, location)",
+        "Overall compatibility score prominently displayed",
+        "Compatibility breakdown showing score for each of 5 dimensions",
+        "Visual chart (radar/bar) showing dimension comparison",
+        "Highlight areas of strong alignment and potential differences",
+        "Like button and Message button (if mutual like)",
+        "Block/Report button in menu",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-014"
+      ]
+    },
+    {
+      "id": "US-016",
+      "title": "Like System & Mutual Matches",
+      "description": "As a user, I want to like profiles and see when we have mutual interest.",
+      "acceptanceCriteria": [
+        "Like action saves to likes table",
+        "Heart icon filled when user has liked a profile",
+        "When mutual like detected, create conversation in conversations table",
+        "Notification/badge showing new mutual matches",
+        "Mutual matches page at /matches showing all mutual likes",
+        "Each mutual match card shows 'It's a match!' badge",
+        "Message button enabled only for mutual matches",
+        "Unlike functionality to remove like",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-014"
+      ]
+    },
+    {
+      "id": "US-017",
+      "title": "Messaging System",
+      "description": "As a user with a mutual match, I want to message them to start a conversation.",
+      "acceptanceCriteria": [
+        "Messages page at /messages listing all conversations",
+        "Each conversation shows: other user photo, name, last message preview, unread count",
+        "Click conversation to open chat at /messages/[conversationId]",
+        "Chat view with message bubbles (sent right, received left)",
+        "Text input with send button at bottom",
+        "Messages saved to messages table with sender_id",
+        "Real-time updates using Supabase realtime subscriptions",
+        "Mark messages as read when conversation opened",
+        "Empty state for no conversations yet",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-016"
+      ]
+    },
+    {
+      "id": "US-018",
+      "title": "User Settings & Profile Edit",
+      "description": "As a user, I want to edit my profile and manage my account settings.",
+      "acceptanceCriteria": [
+        "Settings page at /settings with tabs: Profile, Preferences, Account",
+        "Profile tab: edit display name, bio, photos, location",
+        "Preferences tab: update age range, location pref, dealbreakers",
+        "Account tab: change password, delete account",
+        "Retake quiz button that clears responses and redirects to quiz",
+        "Save changes button with success toast",
+        "Delete account with confirmation modal",
+        "Logout button",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002",
+        "US-003"
+      ]
+    },
+    {
+      "id": "US-019",
+      "title": "Mobile Navigation",
+      "description": "As a user, I want intuitive navigation on mobile devices.",
+      "acceptanceCriteria": [
+        "Bottom navigation bar on mobile: Home, Matches, Messages, Profile",
+        "Side navigation on desktop with same items",
+        "Active state indicator on current page",
+        "Unread message badge on Messages icon",
+        "New match badge on Matches icon",
+        "Smooth transitions between pages",
+        "All core features accessible within 2 taps",
+        "bun run typecheck passes",
+        "bun run lint passes"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    }
+  ],
+  "metadata": {
+    "updatedAt": "2026-01-20T11:23:54.255Z"
+  }
+}
