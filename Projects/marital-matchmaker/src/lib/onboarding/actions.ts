@@ -148,3 +148,55 @@ export async function saveProfile(formData: FormData) {
 
   return { success: true };
 }
+
+export async function saveValuesQuizResponses(formData: FormData) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be logged in to complete the quiz" };
+  }
+
+  const dimension = formData.get("dimension") as string;
+  const responsesStr = formData.get("responses") as string;
+
+  if (!dimension || !responsesStr) {
+    return { error: "Invalid quiz data" };
+  }
+
+  let responses: Record<string, { value: string; weight: number }>;
+  try {
+    responses = JSON.parse(responsesStr);
+  } catch {
+    return { error: "Invalid response data" };
+  }
+
+  // Delete any existing responses for this dimension (in case user is re-doing)
+  await supabase
+    .from("compatibility_quiz_responses")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("dimension", dimension);
+
+  // Insert new responses
+  const insertData = Object.entries(responses).map(([questionId, answer]) => ({
+    user_id: user.id,
+    dimension,
+    question_id: questionId,
+    answer_value: answer.weight,
+  }));
+
+  const { error: insertError } = await supabase
+    .from("compatibility_quiz_responses")
+    .insert(insertData);
+
+  if (insertError) {
+    console.error("Quiz response insert error:", insertError);
+    return { error: "Failed to save your responses. Please try again." };
+  }
+
+  return { success: true };
+}
