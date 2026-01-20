@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { useAuth } from '@/lib/auth/context'
 import { createClient } from '@/lib/supabase/client'
 import { ChevronLeft, ChevronRight, Heart, SkipForward, Loader2 } from 'lucide-react'
+import { calculateUserCityMatches } from '@/lib/matching'
 
 interface HappinessOption {
   value: number
@@ -156,111 +157,11 @@ export default function HappinessAssessmentPage() {
       return false
     }
 
-    const supabase = createClient()
+    const result = await calculateUserCityMatches()
 
-    // Fetch all user responses
-    const { data: responses, error: responsesError } = await supabase
-      .from('assessment_responses')
-      .select('*')
-      .eq('user_id', user.id)
-
-    if (responsesError) {
-      console.error('Error fetching responses:', responsesError)
-      setError('Failed to fetch your responses. Please try again.')
+    if (!result.success) {
+      setError(result.error || 'Failed to calculate matches. Please try again.')
       return false
-    }
-
-    // Calculate average scores per category
-    const categoryScores: Record<string, { total: number; count: number; weightedTotal: number }> = {}
-
-    for (const response of responses || []) {
-      if (!categoryScores[response.category]) {
-        categoryScores[response.category] = { total: 0, count: 0, weightedTotal: 0 }
-      }
-      categoryScores[response.category].total += response.answer_value
-      categoryScores[response.category].count += 1
-      categoryScores[response.category].weightedTotal += response.answer_value * response.weight
-    }
-
-    // Normalize scores to 0-100 scale
-    const normalizedScores: Record<string, number> = {}
-    for (const [category, data] of Object.entries(categoryScores)) {
-      // Convert 1-5 scale to 0-100
-      const avgScore = data.weightedTotal / data.count
-      normalizedScores[category] = ((avgScore - 1) / 4) * 100
-    }
-
-    // Fetch all cities
-    const { data: cities, error: citiesError } = await supabase
-      .from('cities')
-      .select('*')
-
-    if (citiesError) {
-      console.error('Error fetching cities:', citiesError)
-      setError('Failed to fetch cities. Please try again.')
-      return false
-    }
-
-    // Calculate match scores for each city
-    const matches = (cities || []).map((city) => {
-      const dimensionScores: Record<string, number> = {}
-
-      // Calculate dimension scores (inverse of difference, scaled)
-      if (normalizedScores.career !== undefined) {
-        dimensionScores.career = 100 - Math.abs(city.career_score - normalizedScores.career)
-      }
-      if (normalizedScores.lifestyle !== undefined) {
-        dimensionScores.lifestyle = 100 - Math.abs(city.lifestyle_score - normalizedScores.lifestyle)
-      }
-      if (normalizedScores.cost !== undefined) {
-        dimensionScores.cost = 100 - Math.abs(city.cost_index - normalizedScores.cost)
-      }
-      if (normalizedScores.happiness !== undefined) {
-        dimensionScores.happiness = 100 - Math.abs(city.happiness_index - normalizedScores.happiness)
-      }
-
-      // Calculate overall score (average of dimension scores)
-      const scoreValues = Object.values(dimensionScores)
-      const overallScore = scoreValues.length > 0
-        ? scoreValues.reduce((sum, score) => sum + score, 0) / scoreValues.length
-        : 0
-
-      return {
-        user_id: user.id,
-        city_id: city.id,
-        overall_score: Math.round(overallScore * 100) / 100,
-        dimension_scores_json: dimensionScores,
-      }
-    })
-
-    // Delete existing matches for user and insert new ones
-    const { error: deleteError } = await supabase
-      .from('city_matches')
-      .delete()
-      .eq('user_id', user.id)
-
-    if (deleteError) {
-      console.error('Error deleting old matches:', deleteError)
-    }
-
-    const { error: insertError } = await supabase
-      .from('city_matches')
-      .insert(matches)
-
-    if (insertError) {
-      console.error('Error inserting matches:', insertError)
-      setError('Failed to calculate matches. Please try again.')
-      return false
-    }
-
-    // Mark assessment as complete
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .update({ assessment_complete: true })
-      .eq('user_id', user.id)
-
-    if (profileError) {
-      console.error('Error updating profile:', profileError)
     }
 
     return true
