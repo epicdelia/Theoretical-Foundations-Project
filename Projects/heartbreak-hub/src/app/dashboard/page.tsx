@@ -29,7 +29,9 @@ import type {
   UserProgress,
   UserProfile,
   Pathway,
+  JournalEntry,
 } from "@/lib/supabase/types";
+import { RecoveryScoreDashboard } from "@/components/recovery-score-dashboard";
 import {
   Sun,
   BookOpen,
@@ -64,6 +66,9 @@ export default function DashboardPage() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [journalCount, setJournalCount] = useState(0);
   const [encouragementCount, setEncouragementCount] = useState(0);
+  const [recentJournalEntries, setRecentJournalEntries] = useState<JournalEntry[]>([]);
+  const [showDaysCounter, setShowDaysCounter] = useState(true);
+  const [daysSinceBreakup, setDaysSinceBreakup] = useState<number | undefined>(undefined);
 
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
@@ -84,6 +89,16 @@ export default function DashboardPage() {
     }
 
     setUserProfile(profile);
+    setShowDaysCounter(profile.show_days_counter ?? true);
+
+    // Calculate days since breakup based on created_at
+    if (profile.created_at) {
+      const breakupDate = new Date(profile.created_at);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - breakupDate.getTime());
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      setDaysSinceBreakup(diffDays);
+    }
 
     // Fetch pathway info
     const { data: pathwayData } = (await supabase
@@ -135,6 +150,16 @@ export default function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id);
     setJournalCount(journalCnt || 0);
+
+    // Fetch recent journal entries for mood graph (last 7 with mood scores)
+    const { data: recentEntries } = (await supabase
+      .from("journal_entries")
+      .select("*")
+      .eq("user_id", user.id)
+      .not("mood_score", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(7)) as { data: JournalEntry[] | null };
+    setRecentJournalEntries(recentEntries || []);
 
     // Fetch encouragement count for milestones
     const { count: encouragementCnt } = await supabase
@@ -243,9 +268,32 @@ export default function DashboardPage() {
 
       // Fetch content for the new day
       await fetchDayContent(userProfile.pathway_id, nextDay);
+
+      // Refresh recent journal entries for mood graph (in case any were added with mood scores)
+      const { data: recentEntries } = (await supabase
+        .from("journal_entries")
+        .select("*")
+        .eq("user_id", user.id)
+        .not("mood_score", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(7)) as { data: JournalEntry[] | null };
+      setRecentJournalEntries(recentEntries || []);
     }
 
     setIsSaving(false);
+  };
+
+  const handleToggleDaysCounter = async () => {
+    if (!user || !userProfile) return;
+
+    const newValue = !showDaysCounter;
+    setShowDaysCounter(newValue);
+
+    // Update user preference in database
+    await supabase
+      .from("user_profiles")
+      .update({ show_days_counter: newValue })
+      .eq("user_id", user.id);
   };
 
   const handleSignOut = async () => {
@@ -396,6 +444,18 @@ export default function DashboardPage() {
           </Card>
         )}
 
+        {/* Recovery Score Dashboard Widget */}
+        <RecoveryScoreDashboard
+          recoveryScore={userProgress?.recovery_score || 0}
+          currentDay={userProgress?.current_day || 1}
+          totalDays={pathway?.duration_days || 21}
+          streakCount={userProgress?.streak_count || 0}
+          recentJournalEntries={recentJournalEntries}
+          showDaysCounter={showDaysCounter}
+          daysSinceBreakup={daysSinceBreakup}
+          onToggleDaysCounter={handleToggleDaysCounter}
+        />
+
         {/* Daily Content Card */}
         <Card className="mb-6">
           <CardHeader>
@@ -507,37 +567,6 @@ export default function DashboardPage() {
               </Button>
             </CardFooter>
           )}
-        </Card>
-
-        {/* Stats Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg text-purple-700">
-              Your Journey Stats
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-purple-600">
-                  {userProgress?.current_day || 1}
-                </p>
-                <p className="text-sm text-muted-foreground">Days Completed</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-teal-600">
-                  {userProgress?.streak_count || 0}
-                </p>
-                <p className="text-sm text-muted-foreground">Day Streak</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-warm-600">
-                  {userProgress?.recovery_score || 0}
-                </p>
-                <p className="text-sm text-muted-foreground">Recovery Points</p>
-              </div>
-            </div>
-          </CardContent>
         </Card>
       </div>
     </main>
