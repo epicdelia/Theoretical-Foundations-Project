@@ -242,7 +242,7 @@ export default function LeaderboardPage() {
                 return (
                   <Link
                     key={entry.id}
-                    href={`/profile/${entry.user_id}`}
+                    href={`/matchmaker/${entry.user_id}`}
                     className={`flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors ${
                       isCurrentUser ? "bg-primary/5" : ""
                     }`}
