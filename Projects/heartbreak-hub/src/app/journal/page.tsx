@@ -21,8 +21,10 @@ import {
 } from "@/components/ui/select";
 import { useUser } from "@/hooks/use-user";
 import { useAuth } from "@/lib/auth/context";
+import { useMilestones } from "@/lib/milestones/context";
+import type { EarnedMilestone } from "@/lib/milestones/types";
 import { createClient } from "@/lib/supabase/client";
-import type { JournalEntry } from "@/lib/supabase/types";
+import type { JournalEntry, UserProgress, Pathway } from "@/lib/supabase/types";
 import {
   BookOpen,
   LogOut,
@@ -34,6 +36,7 @@ import {
   ChevronRight,
   X,
   LayoutDashboard,
+  Trophy,
 } from "lucide-react";
 
 // Mood emoji mapping (1-10 scale)
@@ -67,6 +70,7 @@ const WRITING_PROMPTS = [
 export default function JournalPage() {
   const { user, isLoading: isUserLoading } = useUser();
   const { signOut } = useAuth();
+  const { setEarnedMilestones, checkAndAwardMilestones } = useMilestones();
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = useMemo(() => createClient() as any, []);
@@ -83,6 +87,9 @@ export default function JournalPage() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
+  const [pathway, setPathway] = useState<Pathway | null>(null);
+  const [encouragementCount, setEncouragementCount] = useState(0);
 
   // Generate random prompts
   const generateRandomPrompts = useCallback(() => {
@@ -91,15 +98,16 @@ export default function JournalPage() {
     setShowPrompts(true);
   }, []);
 
-  // Fetch journal entries
+  // Fetch journal entries and user progress
   useEffect(() => {
     if (!user || isUserLoading) return;
 
     let isMounted = true;
 
-    const loadEntries = async () => {
+    const loadData = async () => {
       setIsLoading(true);
 
+      // Fetch journal entries
       const { data } = (await supabase
         .from("journal_entries")
         .select("*")
@@ -108,16 +116,62 @@ export default function JournalPage() {
 
       if (isMounted) {
         setEntries(data || []);
+      }
+
+      // Fetch user profile and progress for milestones
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile?.pathway_id) {
+        // Fetch pathway
+        const { data: pathwayData } = await supabase
+          .from("pathways")
+          .select("*")
+          .eq("id", profile.pathway_id)
+          .single();
+
+        if (isMounted) {
+          setPathway(pathwayData);
+        }
+
+        // Fetch user progress
+        const { data: progress } = (await supabase
+          .from("user_progress")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("pathway_id", profile.pathway_id)
+          .single()) as { data: UserProgress | null };
+
+        if (isMounted && progress) {
+          setUserProgress(progress);
+          const milestonesFromDb = (progress.milestones_json as unknown as EarnedMilestone[]) || [];
+          setEarnedMilestones(milestonesFromDb);
+        }
+      }
+
+      // Fetch encouragement count for milestones
+      const { count: encouragementCnt } = await supabase
+        .from("encouragements")
+        .select("*", { count: "exact", head: true })
+        .eq("from_user_id", user.id);
+      if (isMounted) {
+        setEncouragementCount(encouragementCnt || 0);
+      }
+
+      if (isMounted) {
         setIsLoading(false);
       }
     };
 
-    loadEntries();
+    loadData();
 
     return () => {
       isMounted = false;
     };
-  }, [user, isUserLoading, supabase]);
+  }, [user, isUserLoading, supabase, setEarnedMilestones]);
 
   // Refetch entries function for after saving
   const refetchEntries = useCallback(async () => {
@@ -186,6 +240,38 @@ export default function JournalPage() {
     });
 
     if (!error) {
+      const newJournalCount = entries.length + 1;
+
+      // Check for milestones if we have progress data
+      if (userProgress && pathway) {
+        const newMilestones = checkAndAwardMilestones({
+          journalCount: newJournalCount,
+          streakCount: userProgress.streak_count,
+          currentDay: userProgress.current_day,
+          pathwayDuration: pathway.duration_days,
+          encouragementsSent: encouragementCount,
+        });
+
+        // Save new milestones to database if any were earned
+        if (newMilestones.length > 0) {
+          const existingMilestones = (userProgress.milestones_json as unknown as EarnedMilestone[]) || [];
+          const allMilestones = [...existingMilestones, ...newMilestones];
+
+          await supabase
+            .from("user_progress")
+            .update({
+              milestones_json: allMilestones as unknown as typeof userProgress.milestones_json,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", userProgress.id);
+
+          setUserProgress({
+            ...userProgress,
+            milestones_json: allMilestones as unknown as typeof userProgress.milestones_json,
+          });
+        }
+      }
+
       setContent("");
       setSelectedMood(null);
       setShowPrompts(false);
@@ -249,6 +335,12 @@ export default function JournalPage() {
               <Link href="/dashboard">
                 <LayoutDashboard className="h-4 w-4 mr-2" />
                 Dashboard
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/milestones">
+                <Trophy className="h-4 w-4 mr-2" />
+                Milestones
               </Link>
             </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>

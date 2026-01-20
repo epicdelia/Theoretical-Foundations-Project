@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/select";
 import { useUser } from "@/hooks/use-user";
 import { useAuth } from "@/lib/auth/context";
+import { useMilestones } from "@/lib/milestones/context";
+import type { EarnedMilestone } from "@/lib/milestones/types";
 import { createClient } from "@/lib/supabase/client";
 import type {
   PathwayContent,
@@ -39,12 +41,14 @@ import {
   Sparkles,
   Calendar,
   NotebookPen,
+  Trophy,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, isLoading: isUserLoading } = useUser();
   const { signOut } = useAuth();
+  const { setEarnedMilestones, checkAndAwardMilestones } = useMilestones();
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = useMemo(() => createClient() as any, []);
@@ -58,6 +62,8 @@ export default function DashboardPage() {
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [reflection, setReflection] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
+  const [journalCount, setJournalCount] = useState(0);
+  const [encouragementCount, setEncouragementCount] = useState(0);
 
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
@@ -117,6 +123,26 @@ export default function DashboardPage() {
     setUserProgress(progress);
     setSelectedDay(progress?.current_day || 1);
 
+    // Sync milestones from database
+    if (progress) {
+      const milestonesFromDb = (progress.milestones_json as unknown as EarnedMilestone[]) || [];
+      setEarnedMilestones(milestonesFromDb);
+    }
+
+    // Fetch journal count for milestones
+    const { count: journalCnt } = await supabase
+      .from("journal_entries")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id);
+    setJournalCount(journalCnt || 0);
+
+    // Fetch encouragement count for milestones
+    const { count: encouragementCnt } = await supabase
+      .from("encouragements")
+      .select("*", { count: "exact", head: true })
+      .eq("from_user_id", user.id);
+    setEncouragementCount(encouragementCnt || 0);
+
     // Fetch content for current day
     if (progress) {
       await fetchDayContent(profile.pathway_id, progress.current_day);
@@ -124,7 +150,7 @@ export default function DashboardPage() {
 
     setIsLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, router]);
+  }, [user, router, setEarnedMilestones]);
 
   const fetchDayContent = async (pathwayId: string, dayNumber: number) => {
     const { data: content } = (await supabase
@@ -165,12 +191,15 @@ export default function DashboardPage() {
     setIsSaving(true);
 
     // Save the reflection as a journal entry
+    let newJournalCount = journalCount;
     if (reflection.trim()) {
       await supabase.from("journal_entries").insert({
         user_id: user.id,
         content: `Day ${selectedDay} Reflection: ${reflection}`,
         mood_score: null,
       });
+      newJournalCount = journalCount + 1;
+      setJournalCount(newJournalCount);
     }
 
     // Update progress to next day
@@ -178,13 +207,28 @@ export default function DashboardPage() {
       userProgress.current_day + 1,
       pathway?.duration_days || 30
     );
+    const newStreakCount = userProgress.streak_count + 1;
+
+    // Check for new milestones before updating
+    const newMilestones = checkAndAwardMilestones({
+      journalCount: newJournalCount,
+      streakCount: newStreakCount,
+      currentDay: nextDay,
+      pathwayDuration: pathway?.duration_days || 30,
+      encouragementsSent: encouragementCount,
+    });
+
+    // Merge new milestones with existing ones
+    const existingMilestones = (userProgress.milestones_json as unknown as EarnedMilestone[]) || [];
+    const allMilestones = [...existingMilestones, ...newMilestones];
 
     const { data: updatedProgress } = (await supabase
       .from("user_progress")
       .update({
         current_day: nextDay,
-        streak_count: userProgress.streak_count + 1,
+        streak_count: newStreakCount,
         recovery_score: userProgress.recovery_score + 10,
+        milestones_json: allMilestones,
         updated_at: new Date().toISOString(),
       })
       .eq("id", userProgress.id)
@@ -248,6 +292,12 @@ export default function DashboardPage() {
               <Link href="/journal">
                 <NotebookPen className="h-4 w-4 mr-2" />
                 Journal
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/milestones">
+                <Trophy className="h-4 w-4 mr-2" />
+                Milestones
               </Link>
             </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>

@@ -35,39 +35,39 @@ INSERT INTO pathways (id, name, description, duration_days, icon) VALUES
 INSERT INTO milestones (id, name, description, icon, points, criteria_type) VALUES
   (
     'd4e5f6a7-b8c9-0123-defa-234567890123',
-    'First Step',
-    'Completed your first day of the recovery journey. Every journey begins with a single step.',
-    'footprints',
+    'First Journal Entry',
+    'Written your first journal entry. Expressing your feelings is a powerful step in healing.',
+    'book-open',
     10,
-    'day_completed'
+    'first_journal'
   ),
   (
     'e5f6a7b8-c9d0-1234-efab-345678901234',
-    'Journaling Journey',
-    'Written 5 journal entries. Expressing your feelings is a powerful part of healing.',
-    'book-open',
-    25,
-    'journal_count'
-  ),
-  (
-    'f6a7b8c9-d0e1-2345-fabc-456789012345',
-    'Week Warrior',
+    '7-Day Streak',
     'Maintained a 7-day streak. Consistency is the key to recovery.',
     'flame',
-    50,
+    25,
     'streak_days'
   ),
   (
+    'f6a7b8c9-d0e1-2345-fabc-456789012345',
+    'Completed Week 1',
+    'Completed your first week of the recovery journey. Every journey begins with a single step.',
+    'calendar-check',
+    50,
+    'week_completed'
+  ),
+  (
     'a7b8c9d0-e1f2-3456-abcd-567890123456',
-    'Community Connector',
+    'Shared Encouragement',
     'Sent your first encouragement to a fellow traveler. Healing together is more powerful.',
-    'users',
+    'heart-handshake',
     20,
     'encouragement_sent'
   ),
   (
     'b8c9d0e1-f2a3-4567-bcde-678901234567',
-    'Halfway Hero',
+    'Halfway There',
     'Reached the halfway point of your pathway. You are stronger than you know.',
     'mountain',
     75,
@@ -75,7 +75,7 @@ INSERT INTO milestones (id, name, description, icon, points, criteria_type) VALU
   ),
   (
     'c9d0e1f2-a3b4-5678-cdef-789012345678',
-    'Recovery Champion',
+    'Program Complete',
     'Completed an entire pathway. You have proven your resilience and commitment to growth.',
     'trophy',
     150,
