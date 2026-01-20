@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConnectorDashboard } from "@/components/connectors";
 import { TrendsDashboard } from "@/components/trends";
+import { VoiceProfileDashboard } from "@/components/voice";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -36,11 +37,16 @@ export default async function DashboardPage() {
         <Tabs defaultValue="trends" className="space-y-6">
           <TabsList>
             <TabsTrigger value="trends">Trends</TabsTrigger>
+            <TabsTrigger value="voice">Voice Profiles</TabsTrigger>
             <TabsTrigger value="connectors">Data Sources</TabsTrigger>
           </TabsList>
 
           <TabsContent value="trends" className="space-y-6">
             <TrendsDashboard />
+          </TabsContent>
+
+          <TabsContent value="voice" className="space-y-6">
+            <VoiceProfileDashboard />
           </TabsContent>
 
           <TabsContent value="connectors">
