@@ -156,3 +156,112 @@ export async function searchTracks(
 
   return data.tracks.items;
 }
+
+// ============================================================================
+// PLAYLIST MANAGEMENT
+// ============================================================================
+
+export interface SpotifyPlaylist {
+  id: string;
+  name: string;
+  description: string | null;
+  collaborative: boolean;
+  public: boolean;
+  external_urls: { spotify: string };
+  images: { url: string; width: number | null; height: number | null }[];
+  tracks: {
+    total: number;
+    items: SpotifyPlaylistTrack[];
+  };
+}
+
+export interface SpotifyPlaylistTrack {
+  added_at: string;
+  added_by: { id: string };
+  track: SpotifyTrack;
+}
+
+/**
+ * Create a new playlist for a user
+ */
+export async function createPlaylist(
+  accessToken: string,
+  userId: string,
+  name: string,
+  description?: string,
+  isPublic: boolean = false,
+  collaborative: boolean = true
+): Promise<SpotifyPlaylist> {
+  const response = await fetch(`${SPOTIFY_API_BASE}/users/${userId}/playlists`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name,
+      description,
+      public: isPublic,
+      collaborative: collaborative && !isPublic, // Collaborative must be false if public
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Spotify API error: ${response.status} - ${error}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Add tracks to a playlist
+ */
+export async function addTracksToPlaylist(
+  accessToken: string,
+  playlistId: string,
+  trackUris: string[]
+): Promise<{ snapshot_id: string }> {
+  const response = await fetch(`${SPOTIFY_API_BASE}/playlists/${playlistId}/tracks`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      uris: trackUris,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Spotify API error: ${response.status} - ${error}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get playlist details including tracks
+ */
+export async function getPlaylist(
+  accessToken: string,
+  playlistId: string
+): Promise<SpotifyPlaylist> {
+  return spotifyFetch<SpotifyPlaylist>(`/playlists/${playlistId}`, accessToken);
+}
+
+/**
+ * Get all tracks from a playlist (handles pagination)
+ */
+export async function getPlaylistTracks(
+  accessToken: string,
+  playlistId: string,
+  limit: number = 100
+): Promise<SpotifyPlaylistTrack[]> {
+  const data = await spotifyFetch<{ items: SpotifyPlaylistTrack[]; total: number }>(
+    `/playlists/${playlistId}/tracks?limit=${limit}`,
+    accessToken
+  );
+  return data.items;
+}

@@ -13,6 +13,9 @@ import {
   Play,
   Check,
   CheckCheck,
+  ListMusic,
+  Plus,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
@@ -21,11 +24,23 @@ import {
   markMessagesAsRead,
   type MessageWithSender,
 } from "@/lib/messaging";
-import { searchTracks, type SpotifyTrack } from "@/lib/spotify/api";
+import {
+  searchTracks,
+  createPlaylist,
+  addTracksToPlaylist,
+  getPlaylistTracks,
+  getCurrentUser,
+  type SpotifyTrack,
+  type SpotifyPlaylistTrack,
+} from "@/lib/spotify/api";
+import {
+  createSharedPlaylist,
+  getSharedPlaylistsByConversation,
+} from "@/lib/playlists";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import type { PhotoJson, SongShareJson, UserProfile } from "@/lib/database.types";
+import type { PhotoJson, SongShareJson, UserProfile, SharedPlaylist } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/client";
 
 function formatMessageTime(dateString: string): string {
@@ -302,6 +317,383 @@ function SpotifySearchModal({
   );
 }
 
+interface CreatePlaylistModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate: (name: string) => void;
+  isCreating: boolean;
+}
+
+function CreatePlaylistModal({
+  isOpen,
+  onClose,
+  onCreate,
+  isCreating,
+}: CreatePlaylistModalProps) {
+  const [playlistName, setPlaylistName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+    if (!isOpen) {
+      setPlaylistName("");
+    }
+  }, [isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (playlistName.trim()) {
+      onCreate(playlistName.trim());
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-background border rounded-2xl w-full max-w-md">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <ListMusic className="h-5 w-5 text-green-500" />
+            Create Shared Playlist
+          </h2>
+          <Button variant="ghost" size="icon" onClick={onClose} disabled={isCreating}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          <div>
+            <label htmlFor="playlist-name" className="text-sm font-medium">
+              Playlist Name
+            </label>
+            <Input
+              id="playlist-name"
+              ref={inputRef}
+              value={playlistName}
+              onChange={(e) => setPlaylistName(e.target.value)}
+              placeholder="Our shared playlist..."
+              className="mt-1"
+              disabled={isCreating}
+              maxLength={100}
+            />
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            This will create a collaborative Spotify playlist that both of you can add songs to.
+          </p>
+
+          <div className="flex gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isCreating}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!playlistName.trim() || isCreating}>
+              {isCreating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Creating...
+                </>
+              ) : (
+                "Create Playlist"
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+interface PlaylistViewModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  playlist: SharedPlaylist | null;
+  tracks: SpotifyPlaylistTrack[];
+  isLoading: boolean;
+  onAddSong: () => void;
+}
+
+function PlaylistViewModal({
+  isOpen,
+  onClose,
+  playlist,
+  tracks,
+  isLoading,
+  onAddSong,
+}: PlaylistViewModalProps) {
+  if (!isOpen || !playlist) return null;
+
+  const playlistUrl = `https://open.spotify.com/playlist/${playlist.spotify_playlist_id}`;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-background border-t rounded-t-2xl max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <ListMusic className="h-5 w-5 text-green-500 flex-shrink-0" />
+              <span className="truncate">{playlist.name}</span>
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {tracks.length} {tracks.length === 1 ? "song" : "songs"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(playlistUrl, "_blank")}
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Open
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : tracks.length === 0 ? (
+            <div className="text-center py-8">
+              <Music className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground mb-4">No songs yet</p>
+              <Button onClick={onAddSong}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add First Song
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {tracks.map((item) => (
+                <button
+                  key={item.track.id}
+                  onClick={() =>
+                    window.open(
+                      `https://open.spotify.com/track/${item.track.id}`,
+                      "_blank"
+                    )
+                  }
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent w-full text-left transition-colors"
+                >
+                  {item.track.album.images[0]?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.track.album.images[0].url}
+                      alt={item.track.album.name}
+                      className="w-12 h-12 rounded-md object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center">
+                      <Music className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{item.track.name}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {item.track.artists.map((a) => a.name).join(", ")}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                    <Play className="h-4 w-4 text-white fill-white ml-0.5" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t">
+          <Button onClick={onAddSong} className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Song to Playlist
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface AddSongToPlaylistModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectSong: (track: SpotifyTrack) => void;
+  accessToken: string | null;
+  playlistName: string;
+  isAdding: boolean;
+}
+
+function AddSongToPlaylistModal({
+  isOpen,
+  onClose,
+  onSelectSong,
+  accessToken,
+  playlistName,
+  isAdding,
+}: AddSongToPlaylistModalProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState<SpotifyTrack[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+    if (!isOpen) {
+      setSearchQuery("");
+      setResults([]);
+      setSearchError(null);
+    }
+  }, [isOpen]);
+
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery.trim() || !accessToken) return;
+
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      const tracks = await searchTracks(accessToken, searchQuery, 10);
+      setResults(tracks);
+    } catch (error) {
+      setSearchError(error instanceof Error ? error.message : "Search failed");
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery, accessToken]);
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        handleSearch();
+      }
+    }, 300);
+
+    return () => clearTimeout(debounce);
+  }, [searchQuery, handleSearch]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-background border-t rounded-t-2xl max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Plus className="h-5 w-5 text-green-500" />
+            <span className="truncate">Add to {playlistName}</span>
+          </h2>
+          <Button variant="ghost" size="icon" onClick={onClose} disabled={isAdding}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        <div className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for a song..."
+              className="pl-10"
+              disabled={isAdding}
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          {!accessToken ? (
+            <div className="text-center py-8">
+              <Music className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">
+                Connect Spotify to add songs
+              </p>
+            </div>
+          ) : isSearching ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : searchError ? (
+            <div className="text-center py-8 text-destructive">
+              <p>{searchError}</p>
+            </div>
+          ) : results.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {searchQuery.trim() ? "No songs found" : "Search for songs to add"}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {results.map((track) => (
+                <button
+                  key={track.id}
+                  onClick={() => onSelectSong(track)}
+                  disabled={isAdding}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent w-full text-left transition-colors disabled:opacity-50"
+                >
+                  {track.album.images[0]?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={track.album.images[0].url}
+                      alt={track.album.name}
+                      className="w-12 h-12 rounded-md object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center">
+                      <Music className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{track.name}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {track.artists.map((a) => a.name).join(", ")}
+                    </p>
+                  </div>
+                  {isAdding ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  ) : (
+                    <Plus className="h-5 w-5 text-green-500" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface PlaylistCardProps {
+  playlist: SharedPlaylist;
+  onClick: () => void;
+}
+
+function PlaylistCard({ playlist, onClick }: PlaylistCardProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 hover:bg-green-500/20 transition-colors w-full text-left"
+    >
+      <div className="w-10 h-10 rounded-md bg-green-500 flex items-center justify-center flex-shrink-0">
+        <ListMusic className="h-5 w-5 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-sm truncate">{playlist.name}</p>
+        <p className="text-xs text-muted-foreground">Shared playlist</p>
+      </div>
+      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+    </button>
+  );
+}
+
 export default function ChatPage() {
   const router = useRouter();
   const params = useParams();
@@ -316,6 +708,17 @@ export default function ChatPage() {
   const [messageInput, setMessageInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isSpotifySearchOpen, setIsSpotifySearchOpen] = useState(false);
+
+  // Playlist state
+  const [sharedPlaylists, setSharedPlaylists] = useState<SharedPlaylist[]>([]);
+  const [matchId, setMatchId] = useState<string | null>(null);
+  const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false);
+  const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<SharedPlaylist | null>(null);
+  const [playlistTracks, setPlaylistTracks] = useState<SpotifyPlaylistTrack[]>([]);
+  const [isLoadingTracks, setIsLoadingTracks] = useState(false);
+  const [isAddSongOpen, setIsAddSongOpen] = useState(false);
+  const [isAddingSong, setIsAddingSong] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -456,6 +859,110 @@ export default function ChatPage() {
     router.push("/messages");
   };
 
+  // Fetch shared playlists
+  const fetchSharedPlaylists = useCallback(async () => {
+    const result = await getSharedPlaylistsByConversation(conversationId);
+    if (result.success) {
+      setSharedPlaylists(result.playlists);
+      if (result.matchId) {
+        setMatchId(result.matchId);
+      }
+    }
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (user && !authLoading && conversationId) {
+      fetchSharedPlaylists();
+    }
+  }, [user, authLoading, conversationId, fetchSharedPlaylists]);
+
+  // Create a new shared playlist
+  const handleCreatePlaylist = async (name: string) => {
+    if (!spotifyTokens?.accessToken || !matchId) return;
+
+    setIsCreatingPlaylist(true);
+
+    try {
+      // Get the current user's Spotify ID
+      const spotifyUser = await getCurrentUser(spotifyTokens.accessToken);
+
+      // Create the playlist on Spotify
+      const playlist = await createPlaylist(
+        spotifyTokens.accessToken,
+        spotifyUser.id,
+        name,
+        `Shared playlist with ${otherUser?.display_name || "your match"}`,
+        false,
+        true
+      );
+
+      // Save to our database
+      const result = await createSharedPlaylist(
+        matchId,
+        playlist.id,
+        name
+      );
+
+      if (result.success && result.playlist) {
+        setSharedPlaylists((prev) => [result.playlist!, ...prev]);
+        setIsCreatePlaylistOpen(false);
+      }
+    } catch (error) {
+      console.error("Error creating playlist:", error);
+    } finally {
+      setIsCreatingPlaylist(false);
+    }
+  };
+
+  // View a playlist
+  const handleViewPlaylist = async (playlist: SharedPlaylist) => {
+    setSelectedPlaylist(playlist);
+    setIsLoadingTracks(true);
+    setPlaylistTracks([]);
+
+    if (spotifyTokens?.accessToken) {
+      try {
+        const tracks = await getPlaylistTracks(
+          spotifyTokens.accessToken,
+          playlist.spotify_playlist_id
+        );
+        setPlaylistTracks(tracks);
+      } catch (error) {
+        console.error("Error loading playlist tracks:", error);
+      }
+    }
+
+    setIsLoadingTracks(false);
+  };
+
+  // Add a song to the playlist
+  const handleAddSongToPlaylist = async (track: SpotifyTrack) => {
+    if (!spotifyTokens?.accessToken || !selectedPlaylist) return;
+
+    setIsAddingSong(true);
+
+    try {
+      await addTracksToPlaylist(
+        spotifyTokens.accessToken,
+        selectedPlaylist.spotify_playlist_id,
+        [`spotify:track:${track.id}`]
+      );
+
+      // Refresh tracks
+      const tracks = await getPlaylistTracks(
+        spotifyTokens.accessToken,
+        selectedPlaylist.spotify_playlist_id
+      );
+      setPlaylistTracks(tracks);
+
+      setIsAddSongOpen(false);
+    } catch (error) {
+      console.error("Error adding song to playlist:", error);
+    } finally {
+      setIsAddingSong(false);
+    }
+  };
+
   // Group messages by date
   const groupedMessages: { date: string; messages: MessageWithSender[] }[] = [];
   let currentDate = "";
@@ -537,42 +1044,62 @@ export default function ChatPage() {
               Try Again
             </Button>
           </Card>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Music className="h-10 w-10 text-muted-foreground" />
-            </div>
-            <p className="text-muted-foreground mb-2">No messages yet</p>
-            <p className="text-sm text-muted-foreground">
-              Say hi or share a song to break the ice!
-            </p>
-          </div>
         ) : (
           <div className="space-y-4">
-            {groupedMessages.map((group, groupIdx) => (
-              <div key={group.date}>
-                {/* Date separator */}
-                <div className="flex items-center justify-center my-4">
-                  <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
-                    {formatDateSeparator(group.date)}
-                  </span>
-                </div>
-
-                {/* Messages in group */}
-                <div className="space-y-2">
-                  {group.messages.map((msg, msgIdx) => (
-                    <MessageBubble
-                      key={msg.message.id}
-                      message={msg}
-                      showReadReceipt={
-                        msgIdx === group.messages.length - 1 &&
-                        groupIdx === groupedMessages.length - 1
-                      }
-                    />
-                  ))}
-                </div>
+            {/* Shared Playlists Section */}
+            {sharedPlaylists.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Shared Playlists
+                </p>
+                {sharedPlaylists.map((playlist) => (
+                  <PlaylistCard
+                    key={playlist.id}
+                    playlist={playlist}
+                    onClick={() => handleViewPlaylist(playlist)}
+                  />
+                ))}
               </div>
-            ))}
+            )}
+
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Music className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground mb-2">No messages yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Say hi or share a song to break the ice!
+                </p>
+              </div>
+            ) : (
+              <>
+                {groupedMessages.map((group, groupIdx) => (
+                  <div key={group.date}>
+                    {/* Date separator */}
+                    <div className="flex items-center justify-center my-4">
+                      <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                        {formatDateSeparator(group.date)}
+                      </span>
+                    </div>
+
+                    {/* Messages in group */}
+                    <div className="space-y-2">
+                      {group.messages.map((msg, msgIdx) => (
+                        <MessageBubble
+                          key={msg.message.id}
+                          message={msg}
+                          showReadReceipt={
+                            msgIdx === group.messages.length - 1 &&
+                            groupIdx === groupedMessages.length - 1
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -588,6 +1115,16 @@ export default function ChatPage() {
             className="flex-shrink-0 text-green-500 hover:text-green-600 hover:bg-green-500/10"
           >
             <Music className="h-5 w-5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCreatePlaylistOpen(true)}
+            className="flex-shrink-0 text-green-500 hover:text-green-600 hover:bg-green-500/10"
+            title="Create shared playlist"
+          >
+            <ListMusic className="h-5 w-5" />
           </Button>
 
           <Input
@@ -620,6 +1157,37 @@ export default function ChatPage() {
         onClose={() => setIsSpotifySearchOpen(false)}
         onSelectSong={handleSendSong}
         accessToken={spotifyTokens?.accessToken || null}
+      />
+
+      {/* Create Playlist Modal */}
+      <CreatePlaylistModal
+        isOpen={isCreatePlaylistOpen}
+        onClose={() => setIsCreatePlaylistOpen(false)}
+        onCreate={handleCreatePlaylist}
+        isCreating={isCreatingPlaylist}
+      />
+
+      {/* View Playlist Modal */}
+      <PlaylistViewModal
+        isOpen={!!selectedPlaylist}
+        onClose={() => {
+          setSelectedPlaylist(null);
+          setPlaylistTracks([]);
+        }}
+        playlist={selectedPlaylist}
+        tracks={playlistTracks}
+        isLoading={isLoadingTracks}
+        onAddSong={() => setIsAddSongOpen(true)}
+      />
+
+      {/* Add Song to Playlist Modal */}
+      <AddSongToPlaylistModal
+        isOpen={isAddSongOpen}
+        onClose={() => setIsAddSongOpen(false)}
+        onSelectSong={handleAddSongToPlaylist}
+        accessToken={spotifyTokens?.accessToken || null}
+        playlistName={selectedPlaylist?.name || ""}
+        isAdding={isAddingSong}
       />
     </div>
   );

@@ -3,7 +3,7 @@
 const SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize";
 const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
 
-// Scopes required for music profile data
+// Scopes required for music profile data and playlist creation
 export const SPOTIFY_SCOPES = [
   "user-read-email",
   "user-read-private",
@@ -11,6 +11,8 @@ export const SPOTIFY_SCOPES = [
   "user-library-read",
   "playlist-read-private",
   "playlist-read-collaborative",
+  "playlist-modify-public",
+  "playlist-modify-private",
 ].join(" ");
 
 export function getSpotifyAuthUrl(state?: string): string {
