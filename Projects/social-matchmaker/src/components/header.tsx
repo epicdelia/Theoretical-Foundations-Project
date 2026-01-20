@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Home, Trophy, Wallet, Users } from "lucide-react";
+import { Heart, Home, Trophy, Wallet, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationsDropdown } from "@/components/notifications/notifications-dropdown";
@@ -60,6 +60,11 @@ export function Header() {
         </div>
         <div className="flex items-center gap-2">
           <NotificationsDropdown />
+          <Link href="/settings">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Settings className="h-4 w-4" />
+            </Button>
+          </Link>
           <Link href="/matchmaker/me">
             <Avatar className="h-8 w-8 cursor-pointer">
               <AvatarImage src={profile?.avatar_url || undefined} />

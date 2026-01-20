@@ -62,6 +62,7 @@ export default function LeaderboardPage() {
         .from("user_profiles")
         .select("*")
         .gt("matches_made", 0) // Only show users who have made at least one match
+        .or("hide_from_leaderboard.is.null,hide_from_leaderboard.eq.false") // Respect privacy setting
         .order(sortBy === "success_rate" ? "successful_matches" : sortBy, { ascending: false })
         .limit(50);
 

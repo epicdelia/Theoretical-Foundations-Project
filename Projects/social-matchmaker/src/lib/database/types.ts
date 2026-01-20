@@ -56,6 +56,11 @@ export interface Database {
           total_earnings: number;
           matches_made: number;
           successful_matches: number;
+          hide_from_leaderboard: boolean;
+          notify_match_proposals: boolean;
+          notify_match_responses: boolean;
+          notify_bet_updates: boolean;
+          notify_milestones: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -68,6 +73,11 @@ export interface Database {
           total_earnings?: number;
           matches_made?: number;
           successful_matches?: number;
+          hide_from_leaderboard?: boolean;
+          notify_match_proposals?: boolean;
+          notify_match_responses?: boolean;
+          notify_bet_updates?: boolean;
+          notify_milestones?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -80,6 +90,11 @@ export interface Database {
           total_earnings?: number;
           matches_made?: number;
           successful_matches?: number;
+          hide_from_leaderboard?: boolean;
+          notify_match_proposals?: boolean;
+          notify_match_responses?: boolean;
+          notify_bet_updates?: boolean;
+          notify_milestones?: boolean;
           created_at?: string;
           updated_at?: string;
         };
