@@ -211,6 +211,7 @@ export type Database = {
           marriage_timeline: string | null;
           relationship_history: string | null;
           what_seeking: string | null;
+          marriage_meaning: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -220,6 +221,7 @@ export type Database = {
           marriage_timeline?: string | null;
           relationship_history?: string | null;
           what_seeking?: string | null;
+          marriage_meaning?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -229,6 +231,7 @@ export type Database = {
           marriage_timeline?: string | null;
           relationship_history?: string | null;
           what_seeking?: string | null;
+          marriage_meaning?: string | null;
           created_at?: string;
           updated_at?: string;
         };
