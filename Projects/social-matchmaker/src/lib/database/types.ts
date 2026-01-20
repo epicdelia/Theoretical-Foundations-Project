@@ -8,6 +8,7 @@ export type Json =
 
 // Enum types
 export type FriendStatus = "pending" | "accepted" | "blocked";
+export type InviteStatus = "pending" | "accepted" | "expired";
 export type ProposalStatus = "pending" | "accepted" | "rejected" | "expired";
 export type RelationshipStatus = "dating" | "engaged" | "married" | "broken_up";
 export type BetStatus =
@@ -423,11 +424,49 @@ export interface Database {
           }
         ];
       };
+      friend_invites: {
+        Row: {
+          id: string;
+          inviter_id: string;
+          invitee_email: string;
+          invite_code: string;
+          status: InviteStatus;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          inviter_id: string;
+          invitee_email: string;
+          invite_code: string;
+          status?: InviteStatus;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          id?: string;
+          inviter_id?: string;
+          invitee_email?: string;
+          invite_code?: string;
+          status?: InviteStatus;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "friend_invites_inviter_id_fkey";
+            columns: ["inviter_id"];
+            referencedRelation: "user_profiles";
+            referencedColumns: ["user_id"];
+          }
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
       friend_status: FriendStatus;
+      invite_status: InviteStatus;
       proposal_status: ProposalStatus;
       relationship_status: RelationshipStatus;
       bet_status: BetStatus;
@@ -485,3 +524,7 @@ export type NotificationUpdate = TablesUpdate<"notifications">;
 export type Wallet = Tables<"wallet">;
 export type WalletInsert = TablesInsert<"wallet">;
 export type WalletUpdate = TablesUpdate<"wallet">;
+
+export type FriendInvite = Tables<"friend_invites">;
+export type FriendInviteInsert = TablesInsert<"friend_invites">;
+export type FriendInviteUpdate = TablesUpdate<"friend_invites">;
