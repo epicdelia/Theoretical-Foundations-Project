@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,17 +10,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useUser } from "@/hooks/use-user";
-import { useAuth } from "@/lib/auth/context";
 import { useMilestones } from "@/lib/milestones/context";
 import { MILESTONE_DEFINITIONS, calculateRecoveryScore } from "@/lib/milestones/service";
 import type { EarnedMilestone } from "@/lib/milestones/types";
 import { createClient } from "@/lib/supabase/client";
 import type { UserProgress } from "@/lib/supabase/types";
+import { AuthenticatedLayout } from "@/components/authenticated-layout";
 import {
-  LogOut,
   Loader2,
-  Sparkles,
-  LayoutDashboard,
   Trophy,
   BookOpen,
   Flame,
@@ -45,7 +40,6 @@ const ICON_MAP: Record<string, typeof Trophy> = {
 
 export default function MilestonesPage() {
   const { user, isLoading: isUserLoading } = useUser();
-  const { signOut } = useAuth();
   const { earnedMilestones, setEarnedMilestones } = useMilestones();
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -110,12 +104,6 @@ export default function MilestonesPage() {
     };
   }, [user, isUserLoading, supabase, router, setEarnedMilestones]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
-    router.refresh();
-  };
-
   // Calculate total recovery score from milestones
   const totalRecoveryScore = useMemo(() => {
     return calculateRecoveryScore(earnedMilestones);
@@ -156,30 +144,8 @@ export default function MilestonesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            <span className="font-semibold text-purple-700">HeartBreak Hub</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard">
-                <LayoutDashboard className="h-4 w-4 mr-2" />
-                Dashboard
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-4xl px-4 py-8">
+    <AuthenticatedLayout>
+      <div className="mx-auto max-w-4xl px-4 py-8 pb-24 md:pb-8">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-purple-700 flex items-center gap-2">
@@ -302,6 +268,6 @@ export default function MilestonesPage() {
           </CardContent>
         </Card>
       </div>
-    </main>
+    </AuthenticatedLayout>
   );
 }

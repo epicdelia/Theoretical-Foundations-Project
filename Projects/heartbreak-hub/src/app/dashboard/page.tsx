@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUser } from "@/hooks/use-user";
-import { useAuth } from "@/lib/auth/context";
 import { useMilestones } from "@/lib/milestones/context";
 import type { EarnedMilestone } from "@/lib/milestones/types";
 import { createClient } from "@/lib/supabase/client";
@@ -32,24 +31,19 @@ import type {
   JournalEntry,
 } from "@/lib/supabase/types";
 import { RecoveryScoreDashboard } from "@/components/recovery-score-dashboard";
+import { AuthenticatedLayout } from "@/components/authenticated-layout";
 import {
   Sun,
   BookOpen,
   PenLine,
   ChevronLeft,
   CheckCircle2,
-  LogOut,
   Loader2,
-  Sparkles,
   Calendar,
-  NotebookPen,
-  Trophy,
 } from "lucide-react";
-import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, isLoading: isUserLoading } = useUser();
-  const { signOut } = useAuth();
   const { setEarnedMilestones, checkAndAwardMilestones } = useMilestones();
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -296,12 +290,6 @@ export default function DashboardPage() {
       .eq("user_id", user.id);
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
-    router.refresh();
-  };
-
   if (isUserLoading || isLoading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center py-12 bg-background">
@@ -327,36 +315,8 @@ export default function DashboardPage() {
   const isCurrentDay = selectedDay === userProgress?.current_day;
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            <span className="font-semibold text-purple-700">HeartBreak Hub</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/journal">
-                <NotebookPen className="h-4 w-4 mr-2" />
-                Journal
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/milestones">
-                <Trophy className="h-4 w-4 mr-2" />
-                Milestones
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-4xl px-4 py-8">
+    <AuthenticatedLayout>
+      <div className="mx-auto max-w-4xl px-4 py-8 pb-24 md:pb-8">
         {/* Progress Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -569,6 +529,6 @@ export default function DashboardPage() {
           )}
         </Card>
       </div>
-    </main>
+    </AuthenticatedLayout>
   );
 }

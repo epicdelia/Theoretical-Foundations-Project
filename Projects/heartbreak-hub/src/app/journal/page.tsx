@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,23 +19,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUser } from "@/hooks/use-user";
-import { useAuth } from "@/lib/auth/context";
 import { useMilestones } from "@/lib/milestones/context";
 import type { EarnedMilestone } from "@/lib/milestones/types";
 import { createClient } from "@/lib/supabase/client";
 import type { JournalEntry, UserProgress, Pathway } from "@/lib/supabase/types";
+import { AuthenticatedLayout } from "@/components/authenticated-layout";
 import {
   BookOpen,
-  LogOut,
   Loader2,
-  Sparkles,
   Save,
   Lightbulb,
   ChevronLeft,
   ChevronRight,
   X,
-  LayoutDashboard,
-  Trophy,
 } from "lucide-react";
 
 // Mood emoji mapping (1-10 scale)
@@ -69,7 +64,6 @@ const WRITING_PROMPTS = [
 
 export default function JournalPage() {
   const { user, isLoading: isUserLoading } = useUser();
-  const { signOut } = useAuth();
   const { setEarnedMilestones, checkAndAwardMilestones } = useMilestones();
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -299,12 +293,6 @@ export default function JournalPage() {
     return text.substring(0, 100) + "...";
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
-    router.refresh();
-  };
-
   if (isUserLoading || isLoading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center py-12 bg-background">
@@ -322,36 +310,8 @@ export default function JournalPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            <span className="font-semibold text-purple-700">HeartBreak Hub</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard">
-                <LayoutDashboard className="h-4 w-4 mr-2" />
-                Dashboard
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/milestones">
-                <Trophy className="h-4 w-4 mr-2" />
-                Milestones
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-4xl px-4 py-8">
+    <AuthenticatedLayout>
+      <div className="mx-auto max-w-4xl px-4 py-8 pb-24 md:pb-8">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-purple-700 flex items-center gap-2">
@@ -617,6 +577,6 @@ export default function JournalPage() {
           </div>
         </div>
       )}
-    </main>
+    </AuthenticatedLayout>
   );
 }

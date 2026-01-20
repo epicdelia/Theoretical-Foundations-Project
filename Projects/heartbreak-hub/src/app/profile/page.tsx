@@ -18,12 +18,11 @@ import { useUser } from "@/hooks/use-user";
 import { useAuth } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/client";
 import type { UserProfile, Pathway, UserProgress } from "@/lib/supabase/types";
+import { AuthenticatedLayout } from "@/components/authenticated-layout";
 import {
   LogOut,
   Loader2,
   Sparkles,
-  LayoutDashboard,
-  Trophy,
   User,
   Settings,
   AlertTriangle,
@@ -219,36 +218,8 @@ export default function ProfilePage() {
     : 0;
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            <span className="font-semibold text-purple-700">HeartBreak Hub</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard">
-                <LayoutDashboard className="h-4 w-4 mr-2" />
-                Dashboard
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/milestones">
-                <Trophy className="h-4 w-4 mr-2" />
-                Milestones
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-2xl px-4 py-8">
+    <AuthenticatedLayout>
+      <div className="mx-auto max-w-2xl px-4 py-8 pb-24 md:pb-8">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-purple-700 flex items-center gap-2">
@@ -590,6 +561,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-    </main>
+    </AuthenticatedLayout>
   );
 }

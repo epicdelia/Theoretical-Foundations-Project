@@ -11,19 +11,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useUser } from "@/hooks/use-user";
-import { useAuth } from "@/lib/auth/context";
 import { useMilestones } from "@/lib/milestones/context";
 import { createClient } from "@/lib/supabase/client";
 import type { CohortMember, UserProgress, Pathway } from "@/lib/supabase/types";
+import { AuthenticatedLayout } from "@/components/authenticated-layout";
 import {
-  LogOut,
   Loader2,
-  Sparkles,
-  LayoutDashboard,
-  Trophy,
   Users,
   Heart,
   Flame,
+  Trophy,
   Calendar,
   CheckCircle2,
   MessageCircle,
@@ -49,7 +46,6 @@ interface CohortMemberWithProgress extends CohortMember {
 
 export default function CohortFeedPage() {
   const { user, isLoading: isUserLoading } = useUser();
-  const { signOut } = useAuth();
   const { checkAndAwardMilestones } = useMilestones();
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -262,12 +258,6 @@ export default function CohortFeedPage() {
     };
   }, [user, isUserLoading, supabase, router, generateFeedItems]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
-    router.refresh();
-  };
-
   const handleEncourage = async (item: FeedItem) => {
     if (!user || !userCohortMembership || item.has_encouraged || item.user_id === user.id) {
       return;
@@ -364,40 +354,8 @@ export default function CohortFeedPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            <span className="font-semibold text-purple-700">HeartBreak Hub</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {user && (
-              <>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/dashboard">
-                    <LayoutDashboard className="h-4 w-4 mr-2" />
-                    Dashboard
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/milestones">
-                    <Trophy className="h-4 w-4 mr-2" />
-                    Milestones
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-4xl px-4 py-8">
+    <AuthenticatedLayout>
+      <div className="mx-auto max-w-4xl px-4 py-8 pb-24 md:pb-8">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-purple-700 flex items-center gap-2">
@@ -527,6 +485,6 @@ export default function CohortFeedPage() {
           </Button>
         </div>
       </div>
-    </main>
+    </AuthenticatedLayout>
   );
 }

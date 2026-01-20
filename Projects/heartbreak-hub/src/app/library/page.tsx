@@ -20,13 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUser } from "@/hooks/use-user";
-import { useAuth } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/client";
 import type {
   ContentLibrary,
   Bookmark,
   UserProfile,
 } from "@/lib/supabase/types";
+import { AuthenticatedLayout } from "@/components/authenticated-layout";
 import {
   BookOpen,
   Dumbbell,
@@ -36,16 +36,11 @@ import {
   Bookmark as BookmarkIcon,
   BookmarkCheck,
   Lock,
-  Sparkles,
-  LogOut,
   Loader2,
-  NotebookPen,
-  Trophy,
   Library,
   Clock,
   Star,
 } from "lucide-react";
-import Link from "next/link";
 
 type Category = "all" | "Articles" | "Exercises" | "Videos" | "Audio";
 type ViewMode = "all" | "bookmarks";
@@ -101,7 +96,6 @@ const getEstimatedTime = (category: string | null) => {
 
 export default function LibraryPage() {
   const { user, isLoading: isUserLoading } = useUser();
-  const { signOut } = useAuth();
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = useMemo(() => createClient() as any, []);
@@ -153,12 +147,6 @@ export default function LibraryPage() {
 
     fetchData();
   }, [isUserLoading, user, supabase]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
-    router.refresh();
-  };
 
   const handleBookmark = async (contentId: string) => {
     if (!user) {
@@ -250,52 +238,8 @@ export default function LibraryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            <span className="font-semibold text-purple-700">HeartBreak Hub</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {user ? (
-              <>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/dashboard">Dashboard</Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/journal">
-                    <NotebookPen className="h-4 w-4 mr-2" />
-                    Journal
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/milestones">
-                    <Trophy className="h-4 w-4 mr-2" />
-                    Milestones
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/login">Sign In</Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-4xl px-4 py-8">
+    <AuthenticatedLayout>
+      <div className="mx-auto max-w-4xl px-4 py-8 pb-24 md:pb-8">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-purple-700 flex items-center gap-2">
@@ -505,6 +449,6 @@ export default function LibraryPage() {
           </div>
         )}
       </div>
-    </main>
+    </AuthenticatedLayout>
   );
 }
