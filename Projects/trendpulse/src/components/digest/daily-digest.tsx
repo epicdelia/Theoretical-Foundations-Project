@@ -19,6 +19,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { TrendSignals } from "@/lib/trends";
+import { ExportDropdown } from "@/components/exports";
 
 interface Trend {
   id: string;
@@ -151,6 +152,7 @@ export function DailyDigest({ maxTrends = 5 }: DailyDigestProps) {
             )}
             Score Trends
           </Button>
+          <ExportDropdown trendDate={new Date().toISOString().split("T")[0]} />
         </div>
       </div>
 

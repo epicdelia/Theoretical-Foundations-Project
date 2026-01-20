@@ -34,6 +34,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { TrendSignals } from "@/lib/trends";
+import { CopyPlainTextButton } from "@/components/exports";
 
 interface PlatformDraft {
   content: string;
@@ -381,25 +382,32 @@ export function DigestTrendCard({
                           )}
                         </Button>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => generateDraft(platform)}
-                        disabled={drafts[platform].loading}
-                      >
-                        {drafts[platform].loading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Regenerating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            Regenerate
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => generateDraft(platform)}
+                          disabled={drafts[platform].loading}
+                        >
+                          {drafts[platform].loading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Regenerating...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-4 w-4 mr-2" />
+                              Regenerate
+                            </>
+                          )}
+                        </Button>
+                        <CopyPlainTextButton
+                          content={drafts[platform].content}
+                          platform="buffer"
+                          label="Buffer/Metricool"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-6">
