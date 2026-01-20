@@ -8,6 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ConnectorDashboard } from "@/components/connectors";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -37,30 +39,43 @@ export default async function DashboardPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-2">Today&apos;s Trending Topics</h2>
-          <p className="text-muted-foreground">
-            AI-curated trends in Tech &amp; AI, ranked by relevance
-          </p>
-        </div>
+        <Tabs defaultValue="trends" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="trends">Trends</TabsTrigger>
+            <TabsTrigger value="connectors">Data Sources</TabsTrigger>
+          </TabsList>
 
-        <div className="grid gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Welcome to TrendPulse!</CardTitle>
-              <CardDescription>
-                Your daily trend intelligence dashboard is ready
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <TabsContent value="trends" className="space-y-6">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-2">Today&apos;s Trending Topics</h2>
               <p className="text-muted-foreground">
-                Once data sources are connected and trends are scored, you&apos;ll see
-                your top 5 daily trends here with AI-generated content ready to
-                post.
+                AI-curated trends in Tech &amp; AI, ranked by relevance
               </p>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+
+            <div className="grid gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Welcome to TrendPulse!</CardTitle>
+                  <CardDescription>
+                    Your daily trend intelligence dashboard is ready
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Once data sources are connected and trends are scored, you&apos;ll see
+                    your top 5 daily trends here with AI-generated content ready to
+                    post.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="connectors">
+            <ConnectorDashboard />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
