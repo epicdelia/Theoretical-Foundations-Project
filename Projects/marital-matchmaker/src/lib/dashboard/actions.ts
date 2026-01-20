@@ -128,7 +128,12 @@ export async function getMatchesForDashboard(
 
 export async function toggleLike(
   toUserId: string
-): Promise<{ success: boolean; isLiked: boolean; error?: string }> {
+): Promise<{
+  success: boolean;
+  isLiked: boolean;
+  isMutualMatch: boolean;
+  error?: string;
+}> {
   const supabase = await createClient();
 
   const {
@@ -136,7 +141,12 @@ export async function toggleLike(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { success: false, isLiked: false, error: "Not authenticated" };
+    return {
+      success: false,
+      isLiked: false,
+      isMutualMatch: false,
+      error: "Not authenticated",
+    };
   }
 
   // Check if like exists
@@ -156,10 +166,15 @@ export async function toggleLike(
 
     if (error) {
       console.error("Error removing like:", error);
-      return { success: false, isLiked: true, error: "Failed to unlike" };
+      return {
+        success: false,
+        isLiked: true,
+        isMutualMatch: false,
+        error: "Failed to unlike",
+      };
     }
 
-    return { success: true, isLiked: false };
+    return { success: true, isLiked: false, isMutualMatch: false };
   } else {
     // Like - add the like
     const { error } = await supabase.from("likes").insert({
@@ -169,10 +184,59 @@ export async function toggleLike(
 
     if (error) {
       console.error("Error adding like:", error);
-      return { success: false, isLiked: false, error: "Failed to like" };
+      return {
+        success: false,
+        isLiked: false,
+        isMutualMatch: false,
+        error: "Failed to like",
+      };
     }
 
-    return { success: true, isLiked: true };
+    // Check if the other user has also liked us (mutual like)
+    const { data: mutualLike } = await supabase
+      .from("likes")
+      .select("id")
+      .eq("from_user_id", toUserId)
+      .eq("to_user_id", user.id)
+      .single();
+
+    if (mutualLike) {
+      // Create a conversation for the mutual match
+      // First, find the match record between these users
+      const { data: matchRecord } = await supabase
+        .from("matches")
+        .select("id")
+        .or(
+          `and(user1_id.eq.${user.id},user2_id.eq.${toUserId}),and(user1_id.eq.${toUserId},user2_id.eq.${user.id})`
+        )
+        .single();
+
+      if (matchRecord) {
+        // Check if conversation already exists
+        const { data: existingConversation } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("match_id", matchRecord.id)
+          .single();
+
+        if (!existingConversation) {
+          // Create the conversation
+          await supabase.from("conversations").insert({
+            match_id: matchRecord.id,
+          });
+        }
+
+        // Update match status to accepted
+        await supabase
+          .from("matches")
+          .update({ status: "accepted" })
+          .eq("id", matchRecord.id);
+      }
+
+      return { success: true, isLiked: true, isMutualMatch: true };
+    }
+
+    return { success: true, isLiked: true, isMutualMatch: false };
   }
 }
 

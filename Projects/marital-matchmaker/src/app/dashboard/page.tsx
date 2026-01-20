@@ -8,10 +8,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { signOut } from "@/lib/auth/actions";
 import { getMatchesForDashboard } from "@/lib/dashboard/actions";
+import { getMutualMatchesCount } from "@/lib/matches/actions";
 import { DashboardMatches } from "@/components/dashboard/DashboardMatches";
-import { MessageSquare, Settings } from "lucide-react";
+import { Heart, MessageSquare, Settings } from "lucide-react";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -36,8 +38,11 @@ export default async function DashboardPage() {
     redirect("/onboarding");
   }
 
-  // Fetch initial matches
-  const { matches } = await getMatchesForDashboard("compatibility");
+  // Fetch initial matches and mutual matches count
+  const [{ matches }, { count: mutualMatchesCount }] = await Promise.all([
+    getMatchesForDashboard("compatibility"),
+    getMutualMatchesCount(),
+  ]);
 
   return (
     <div className="py-12">
@@ -61,6 +66,30 @@ export default async function DashboardPage() {
         </div>
 
         <div className="space-y-4">
+          <Card className="border-pink-200 bg-gradient-to-br from-pink-50 to-rose-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
+                Mutual Matches
+                {mutualMatchesCount > 0 && (
+                  <Badge className="bg-pink-500 hover:bg-pink-600">
+                    {mutualMatchesCount}
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription>
+                People who liked you back
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/matches">
+                <Button variant="default" className="w-full bg-pink-500 hover:bg-pink-600">
+                  View Matches
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
