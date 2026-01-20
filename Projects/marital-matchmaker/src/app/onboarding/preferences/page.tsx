@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { savePreferences } from "@/lib/onboarding/actions";
+import { onQuizComplete } from "@/lib/compatibility/scoring";
 
 const LOCATION_OPTIONS = [
   { value: "same_city", label: "Same city" },
@@ -81,6 +82,10 @@ export default function PreferencesPage() {
     } else {
       // Show "Finding your matches..." state
       setIsComplete(true);
+
+      // Calculate compatibility matches for the user
+      await onQuizComplete();
+
       // Redirect to dashboard after a brief delay
       setTimeout(() => {
         router.push("/dashboard");
