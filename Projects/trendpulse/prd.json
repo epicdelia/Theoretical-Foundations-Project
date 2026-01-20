@@ -1,0 +1,148 @@
+{
+  "name": "TrendPulse - AI Trend Intelligence for Tech Creators",
+  "description": "A daily trend intelligence system that finds trending Tech + AI topics relevant to software developers, ranks them, and generates ready-to-post content in the user's voice.",
+  "branchName": "main",
+  "userStories": [
+    {
+      "id": "US-1",
+      "title": "Project Setup & Database",
+      "description": "Project Setup & Database",
+      "acceptanceCriteria": [
+        "Initialize Next.js 14 with App Router",
+        "Set up TailwindCSS and shadcn/ui",
+        "Configure Supabase client",
+        "Create database migrations for all tables",
+        "Set up environment variables template",
+        "Add basic auth with magic link (Supabase Auth)"
+      ],
+      "priority": 1,
+      "passes": false,
+      "labels": [],
+      "dependsOn": []
+    },
+    {
+      "id": "US-2",
+      "title": "Data Source Connectors",
+      "description": "Data Source Connectors",
+      "acceptanceCriteria": [
+        "Hacker News connector (official API)",
+        "Reddit connector (r/programming, r/MachineLearning)",
+        "GitHub Trending connector (parse public page)",
+        "RSS connector for TechCrunch, Verge, Ars Technica",
+        "Product Hunt connector (API)",
+        "Rate limiting and caching for all connectors",
+        "Error handling with fallbacks",
+        "Connector status dashboard"
+      ],
+      "priority": 2,
+      "passes": false,
+      "labels": [],
+      "dependsOn": []
+    },
+    {
+      "id": "US-3",
+      "title": "Trend Scoring Engine",
+      "description": "Trend Scoring Engine",
+      "acceptanceCriteria": [
+        "Implement scoring algorithm (velocity, cross-platform, relevance, novelty)",
+        "Aggregate trends from all sources",
+        "Deduplicate similar topics (fuzzy matching)",
+        "Store scored trends in database",
+        "API endpoint to get daily top 5 trends",
+        "Score breakdown visible in UI"
+      ],
+      "priority": 3,
+      "passes": false,
+      "labels": [],
+      "dependsOn": []
+    },
+    {
+      "id": "US-4",
+      "title": "Voice Profile System",
+      "description": "Voice Profile System",
+      "acceptanceCriteria": [
+        "UI to paste 10-30 sample posts",
+        "Extract patterns: tone, structure, emoji usage, CTAs, phrases",
+        "Store voice profile in database",
+        "Use profile in content generation prompts",
+        "Allow multiple profiles (LinkedIn voice vs Twitter voice)"
+      ],
+      "priority": 4,
+      "passes": false,
+      "labels": [],
+      "dependsOn": []
+    },
+    {
+      "id": "US-5",
+      "title": "Content Generation Pipeline",
+      "description": "Content Generation Pipeline",
+      "acceptanceCriteria": [
+        "LinkedIn post generator (long-form, professional)",
+        "Twitter thread generator (hook + 5-8 tweets)",
+        "Instagram Reel script generator (30-45s, hook/body/CTA/loop)",
+        "Angle selector: hot take, tutorial, founder story, meme",
+        "Reply bank generator (5 spicy replies per trend)",
+        "No hallucinated facts - cite sources",
+        "Loading states and regenerate button"
+      ],
+      "priority": 4,
+      "passes": false,
+      "labels": [],
+      "dependsOn": []
+    },
+    {
+      "id": "US-6",
+      "title": "Dashboard UI",
+      "description": "Dashboard UI",
+      "acceptanceCriteria": [
+        "Daily digest page with 5 ranked trends",
+        "Each trend shows: summary, why it matters, signals, links",
+        "Expandable sections for video ideas and drafts",
+        "Platform tabs (LinkedIn/Twitter/Reel) for each trend",
+        "Copy button for each draft",
+        "Mobile responsive",
+        "Dark mode"
+      ],
+      "priority": 4,
+      "passes": false,
+      "labels": [],
+      "dependsOn": []
+    },
+    {
+      "id": "US-7",
+      "title": "Export & Integrations",
+      "description": "Export & Integrations",
+      "acceptanceCriteria": [
+        "Export to CSV (trends + content)",
+        "Export to Notion (create database entries)",
+        "Copy as plain text (Buffer/Metricool ready)",
+        "Email digest (daily at 7 AM user timezone)"
+      ],
+      "priority": 4,
+      "passes": false,
+      "labels": [],
+      "dependsOn": []
+    },
+    {
+      "id": "US-8",
+      "title": "Scheduled Jobs",
+      "description": "Scheduled Jobs",
+      "acceptanceCriteria": [
+        "Vercel Cron job to fetch sources (every 2 hours)",
+        "Daily scoring job (6 AM UTC)",
+        "Daily email digest job (per user timezone)",
+        "Job status logging",
+        "Manual trigger button in dashboard"
+      ],
+      "priority": 4,
+      "passes": false,
+      "labels": [],
+      "dependsOn": []
+    }
+  ],
+  "metadata": {
+    "createdAt": "2026-01-20T06:28:54.131Z",
+    "version": "1.0.0",
+    "updatedAt": "2026-01-20T06:30:10.665Z"
+  }
+}
