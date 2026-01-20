@@ -200,3 +200,65 @@ export async function saveValuesQuizResponses(formData: FormData) {
 
   return { success: true };
 }
+
+export async function savePreferences(formData: FormData) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be logged in to save preferences" };
+  }
+
+  const minAgeStr = formData.get("min_age") as string;
+  const maxAgeStr = formData.get("max_age") as string;
+  const preferredLocation = formData.get("preferred_location") as string;
+  const dealbreakersStr = formData.get("dealbreakers") as string;
+
+  // Validate age range
+  const minAge = parseInt(minAgeStr, 10);
+  const maxAge = parseInt(maxAgeStr, 10);
+
+  if (isNaN(minAge) || minAge < 18 || minAge > 80) {
+    return { error: "Minimum age must be between 18 and 80" };
+  }
+
+  if (isNaN(maxAge) || maxAge < 18 || maxAge > 80) {
+    return { error: "Maximum age must be between 18 and 80" };
+  }
+
+  if (minAge > maxAge) {
+    return { error: "Minimum age cannot be greater than maximum age" };
+  }
+
+  // Parse dealbreakers
+  let dealbreakers: string[] = [];
+  try {
+    dealbreakers = JSON.parse(dealbreakersStr || "[]");
+  } catch {
+    return { error: "Invalid dealbreakers data" };
+  }
+
+  // Upsert user preferences
+  const { error: upsertError } = await supabase
+    .from("user_preferences")
+    .upsert(
+      {
+        user_id: user.id,
+        min_age: minAge,
+        max_age: maxAge,
+        preferred_location: preferredLocation || null,
+        dealbreakers_json: dealbreakers,
+      },
+      { onConflict: "user_id" }
+    );
+
+  if (upsertError) {
+    console.error("Preferences upsert error:", upsertError);
+    return { error: "Failed to save preferences. Please try again." };
+  }
+
+  return { success: true };
+}
