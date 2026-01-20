@@ -130,3 +130,29 @@ export async function getAllTopArtists(
 
   return { short, medium, long };
 }
+
+export interface SpotifySearchResult {
+  tracks: {
+    items: SpotifyTrack[];
+    total: number;
+  };
+}
+
+/**
+ * Search for tracks on Spotify
+ */
+export async function searchTracks(
+  accessToken: string,
+  query: string,
+  limit: number = 20
+): Promise<SpotifyTrack[]> {
+  if (!query.trim()) return [];
+
+  const encodedQuery = encodeURIComponent(query);
+  const data = await spotifyFetch<SpotifySearchResult>(
+    `/search?q=${encodedQuery}&type=track&limit=${limit}`,
+    accessToken
+  );
+
+  return data.tracks.items;
+}
